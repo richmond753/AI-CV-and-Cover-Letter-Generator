@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Create Account – CareerAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body class="auth-page">
+  <div class="auth-card">
+    <div class="auth-logo">Career<span class="accent">AI</span></div>
+    <h2>Create your account</h2>
+    <p class="auth-subtitle">Free forever. No credit card needed.</p>
+
+    <div class="alert alert-error" id="regError">Something went wrong. Please try again.</div>
+    <div class="alert alert-success" id="regSuccess">Account created! Redirecting…</div>
+
+    <div class="form-group">
+      <label class="form-label" for="fullname">Full name</label>
+      <input class="form-control" id="fullname" type="text" placeholder="Kwame Mensah" autocomplete="name"/>
+      <span class="form-error" id="nameErr">Full name is required.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="email">Email address</label>
+      <input class="form-control" id="email" type="email" placeholder="you@email.com" autocomplete="email"/>
+      <span class="form-error" id="emailErr">Please enter a valid email.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="password">Password</label>
+      <input class="form-control" id="password" type="password" placeholder="Min. 8 characters" oninput="updateStrength()"/>
+      <div class="pw-strength" id="pwStrength" hidden>
+        <div class="pw-bar" id="pwBar"><span></span></div>
+        <span class="pw-label" id="pwLabel"></span>
+      </div>
+      <span class="form-hint">Use 8+ characters with a mix of letters, numbers & symbols.</span>
+      <span class="form-error" id="passErr">Password must be at least 8 characters.</span>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="confirm">Confirm password</label>
+      <input class="form-control" id="confirm" type="password" placeholder="Repeat password"/>
+      <span class="form-error" id="confirmErr">Passwords do not match.</span>
+    </div>
+
+    <button class="btn-primary btn-full" id="regBtn" onclick="handleRegister()">
+      Create Account
+    </button>
+
+    <p class="auth-footer">
+      Already have an account? <a href="login.html">Log in</a>
+    </p>
+    <p class="auth-footer" style="margin-top:8px;">
+      <a href="../index.html">← Back to home</a>
+    </p>
+  </div>
+
+  <script src="../js/main.js"></script>
+  <script>
+    function storeProfileFromAuth(data) {
+      const existing = JSON.parse(localStorage.getItem('careerai_profile') || '{}');
+      localStorage.setItem('careerai_profile', JSON.stringify({
+        ...existing, fullname: data.user.fullname, email: data.user.email
+      }));
+    }
+
+    function passwordScore(pw) {
+      let score = 0;
+      if (pw.length >= 8) score++;
+      if (pw.length >= 12) score++;
+      if (/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
+      if (/\d/.test(pw)) score++;
+      if (/[^A-Za-z0-9]/.test(pw)) score++;
+      return score;
+    }
+
+    function updateStrength() {
+      const pw = document.getElementById('password').value;
+      const wrap = document.getElementById('pwStrength');
+      const bar = document.getElementById('pwBar');
+      const label = document.getElementById('pwLabel');
+      if (!pw) { wrap.hidden = true; return; }
+      wrap.hidden = false;
+      const score = passwordScore(pw);
+      const level = score <= 2 ? 'weak' : score <= 3 ? 'medium' : 'strong';
+      const text  = level === 'weak' ? 'Weak' : level === 'medium' ? 'Medium' : 'Strong';
+      bar.className = 'pw-bar ' + level;
+      label.className = 'pw-label ' + level;
+      label.textContent = text;
+    }
+
+    function showRegError(message) {
+      const el = document.getElementById('regError');
+      el.textContent = message;
+      el.classList.add('visible');
+    }
+
+    async function handleRegister() {
+      const fullname = document.getElementById('fullname').value.trim();
+      const email    = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+      const confirm  = document.getElementById('confirm').value;
+      let valid = true;
+
+      document.querySelectorAll('.form-error').forEach(e => e.classList.remove('visible'));
+      ['regError','regSuccess'].forEach(id => document.getElementById(id).classList.remove('visible'));
+
+      if (!fullname) { document.getElementById('nameErr').classList.add('visible'); valid = false; }
+      if (!email || !/\S+@\S+\.\S+/.test(email)) { document.getElementById('emailErr').classList.add('visible'); valid = false; }
+      if (password.length < 8) { document.getElementById('passErr').classList.add('visible'); valid = false; }
+      if (password !== confirm) { document.getElementById('confirmErr').classList.add('visible'); valid = false; }
+      if (!valid) return;
+
+      const btn = document.getElementById('regBtn');
+      btn.innerHTML = '<span class="loading-spinner"></span> Creating account…';
+      btn.disabled = true;
+
+      try {
+        const { data } = await apiFetch('/api/auth/register', {
+          method: 'POST', auth: false, body: { fullname, email, password }
+        });
+        if (data.success) {
+          document.getElementById('regSuccess').classList.add('visible');
+          localStorage.setItem('careerai_token', data.token);
+          localStorage.setItem('careerai_user', JSON.stringify(data.user));
+          storeProfileFromAuth(data);
+          setTimeout(() => window.location.href = 'dashboard.html', 1200);
+          return;
+        }
+        showRegError(data.message || 'Something went wrong. Please try again.');
+      } catch (err) {
+        showRegError(describeError(err));
+      }
+      btn.innerHTML = 'Create Account'; btn.disabled = false;
+    }
+
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') handleRegister(); });
+  </script>
+</body>
+</html>

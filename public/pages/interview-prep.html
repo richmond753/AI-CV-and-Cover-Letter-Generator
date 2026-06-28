@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Interview Prep – CareerAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body class="dashboard-layout">
+
+  <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Career<span class="accent">AI</span></div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item"><span class="nav-item-icon">🏠</span> Dashboard</a>
+      <a href="cv-builder.html" class="nav-item"><span class="nav-item-icon">📄</span> CV Builder</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-item-icon">✉️</span> Cover Letter</a>
+      <a href="ats-checker.html" class="nav-item"><span class="nav-item-icon">🎯</span> ATS Checker</a>
+      <a href="interview-prep.html" class="nav-item active" aria-current="page"><span class="nav-item-icon" aria-hidden="true">🎤</span> Interview Prep</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <span id="userName">User</span>
+      </div>
+      <button onclick="logout()" style="margin-top:10px;background:none;border:none;color:var(--white-muted);font-size:0.78rem;cursor:pointer;">Log out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>🎤 Interview Prep</h1>
+      <p>Practice with AI-generated questions and suggested answers for your target role.</p>
+    </div>
+
+    <div class="tool-layout">
+      <!-- INPUT -->
+      <div class="tool-panel">
+        <h3>Your Target Role</h3>
+
+        <div class="form-group">
+          <label class="form-label">Job Title</label>
+          <input class="form-control" id="ip_title" placeholder="Software Engineer"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Industry</label>
+          <select class="form-control" id="ip_industry">
+            <option value="Technology">Technology / Software</option>
+            <option value="Finance">Finance & Banking</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Marketing">Marketing & Advertising</option>
+            <option value="Education">Education</option>
+            <option value="Engineering">Engineering</option>
+            <option value="Consulting">Consulting</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Experience level</label>
+          <select class="form-control" id="ip_level">
+            <option value="entry">Entry-level / Graduate</option>
+            <option value="internship">Internship</option>
+            <option value="mid">Mid-level (2–5 years)</option>
+            <option value="senior">Senior (5+ years)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Number of questions</label>
+          <select class="form-control" id="ip_count">
+            <option value="5">5 questions (quick prep)</option>
+            <option value="10" selected>10 questions (standard)</option>
+            <option value="15">15 questions (thorough)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Focus area</label>
+          <select class="form-control" id="ip_focus">
+            <option value="both">Both technical & behavioral</option>
+            <option value="technical">Technical only</option>
+            <option value="behavioral">Behavioral only</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Additional context (optional)</label>
+          <textarea class="form-control" id="ip_context" rows="3" placeholder="E.g. applying to a startup, role involves React and Node.js, company focuses on fintech…"></textarea>
+        </div>
+
+        <button class="btn-mint btn-full" id="ipBtn" onclick="generateQuestions()">
+          🎤 Generate questions
+        </button>
+        <button class="btn-outline btn-full" id="cancelIPBtn" style="margin-top:10px;" onclick="cancelIP()" hidden>Cancel generation</button>
+        <p class="form-hint" style="text-align:center;margin-top:8px;">Tip: press Ctrl + Enter to generate.</p>
+      </div>
+
+      <!-- OUTPUT -->
+      <div>
+        <div id="ipPlaceholder" class="tool-panel">
+          <h3>Practice Questions</h3>
+          <div class="tool-output" id="ipProgress" style="min-height:240px;" aria-live="polite">
+            <p class="output-placeholder">Your interview questions and suggested answers will appear here.</p>
+          </div>
+        </div>
+
+        <div id="ipResults" hidden>
+          <!-- Tabs -->
+          <div style="display:flex;gap:8px;margin-bottom:16px;" id="ipTabs">
+            <button class="tab-btn active" onclick="showTab('technical')" id="tab-technical">Technical</button>
+            <button class="tab-btn" onclick="showTab('behavioral')" id="tab-behavioral">Behavioral</button>
+          </div>
+
+          <div id="tab-content-technical" class="question-list"></div>
+          <div id="tab-content-behavioral" class="question-list" hidden></div>
+        </div>
+
+        <div class="alert alert-error" id="ipError" role="alert" style="margin-top:12px;">Failed to generate questions. Please try again.</div>
+      </div>
+    </div>
+  </main>
+
+  <style>
+    .tab-btn {
+      padding: 8px 18px; border-radius: 8px;
+      border: 1.5px solid var(--border); background: none;
+      color: var(--white-dim); font-family: 'Inter', sans-serif;
+      font-size: 0.85rem; font-weight: 600; cursor: pointer;
+      transition: 0.15s;
+    }
+    .tab-btn.active { background: var(--indigo); border-color: var(--indigo); color: #fff; }
+    .tab-btn:hover:not(.active) { border-color: var(--indigo-lt); color: var(--white); }
+  </style>
+
+  <script src="../js/main.js"></script>
+  <script>
+    if (!requireAuth()) { /* redirected */ }
+    setUserIdentity();
+
+    function showIPError(message) {
+      const el = document.getElementById('ipError');
+      el.textContent = message;
+      el.classList.add('visible');
+    }
+
+    async function loadSavedInterview() {
+      try {
+        const { data } = await apiFetch('/api/interview/latest');
+        if (data.success && data.interview && data.interview.generated_questions) {
+          document.getElementById('ip_title').value = data.interview.job_title || '';
+          renderQuestions(data.interview.generated_questions);
+        }
+      } catch {
+        // Optional enhancement only.
+      }
+    }
+
+    loadSavedInterview();
+
+    let ipAbort = null;
+    function cancelIP() { if (ipAbort) ipAbort.abort(); }
+
+    async function generateQuestions() {
+      if (ipAbort) return;
+      const btn = document.getElementById('ipBtn');
+      document.getElementById('ipError').classList.remove('visible');
+
+      const payload = {
+        jobTitle:  document.getElementById('ip_title').value,
+        industry:  document.getElementById('ip_industry').value,
+        level:     document.getElementById('ip_level').value,
+        count:     parseInt(document.getElementById('ip_count').value),
+        focus:     document.getElementById('ip_focus').value,
+        context:   document.getElementById('ip_context').value
+      };
+
+      if (!payload.jobTitle) { showToast('Please enter a job title.', 'error'); return; }
+
+      ipAbort = new AbortController();
+      btn.innerHTML = '<span class="loading-spinner"></span> Generating…'; btn.disabled = true;
+      document.getElementById('cancelIPBtn').hidden = false;
+      document.getElementById('ipPlaceholder').hidden = false;
+      document.getElementById('ipResults').hidden = true;
+      const stopProgress = startStagedProgress(document.getElementById('ipProgress'), [
+        'Studying the role…',
+        'Selecting relevant topics…',
+        'Writing questions…',
+        'Drafting strong sample answers…'
+      ]);
+
+      try {
+        const { data: result } = await apiFetch('/api/interview/generate', { method: 'POST', body: payload, signal: ipAbort.signal });
+        stopProgress();
+        if (result.success) { renderQuestions(result.data); showToast('Questions generated.', 'success'); }
+        else showIPError(result.message || 'Failed to generate questions. Please try again.');
+      } catch (err) {
+        stopProgress();
+        document.getElementById('ipProgress').innerHTML =
+          '<p class="output-placeholder">Your interview questions and suggested answers will appear here.</p>';
+        if (err && err.name === 'AbortError') showToast('Generation cancelled.', 'info');
+        else showIPError(describeError(err));
+      } finally {
+        ipAbort = null;
+        btn.innerHTML = '🎤 Generate questions'; btn.disabled = false;
+        document.getElementById('cancelIPBtn').hidden = true;
+      }
+    }
+
+    function renderQuestions(data) {
+      document.getElementById('ipPlaceholder').hidden = true;
+      document.getElementById('ipResults').hidden = false;
+
+      const techEl = document.getElementById('tab-content-technical');
+      const behEl  = document.getElementById('tab-content-behavioral');
+      techEl.innerHTML = ''; behEl.innerHTML = '';
+
+      const focus = document.getElementById('ip_focus').value;
+      const techTab = document.getElementById('tab-technical');
+      const behTab  = document.getElementById('tab-behavioral');
+
+      if (focus === 'behavioral') { techTab.style.display = 'none'; showTab('behavioral'); }
+      else if (focus === 'technical') { behTab.style.display = 'none'; showTab('technical'); }
+
+      (data.technical || []).forEach((q, i) => {
+        techEl.innerHTML += buildQuestionCard(q, 'Technical', i);
+      });
+      (data.behavioral || []).forEach((q, i) => {
+        behEl.innerHTML += buildQuestionCard(q, 'Behavioral', i);
+      });
+    }
+
+    function buildQuestionCard(q, type, i) {
+      const answerId = `ans-${type}-${i}`;
+      return `<div class="question-card">
+        <div class="q-type">${escapeHtml(type)}</div>
+        <div class="q-text">${escapeHtml(q.question)}</div>
+        <span class="q-toggle" onclick="toggleAnswer('${answerId}')">▸ Show suggested answer</span>
+        <div class="q-answer" id="${answerId}" hidden>${escapeHtml(q.answer)}</div>
+      </div>`;
+    }
+
+    function toggleAnswer(id) {
+      const el = document.getElementById(id);
+      const toggle = el.previousElementSibling;
+      if (el.hidden) { el.hidden = false; toggle.textContent = '▾ Hide answer'; }
+      else { el.hidden = true; toggle.textContent = '▸ Show suggested answer'; }
+    }
+
+    function showTab(name) {
+      ['technical','behavioral'].forEach(t => {
+        document.getElementById(`tab-content-${t}`).hidden = t !== name;
+        document.getElementById(`tab-${t}`).classList.toggle('active', t === name);
+      });
+    }
+
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generateQuestions();
+    });
+  </script>
+</body>
+</html>

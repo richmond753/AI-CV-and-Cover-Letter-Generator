@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CareerAI – Your AI Career Assistant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body class="landing-page">
+
+  <!-- NAV -->
+  <nav class="navbar">
+    <div class="nav-brand">Career<span class="accent">AI</span></div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="pages/login.html" class="btn-outline">Log In</a>
+      <a href="pages/register.html" class="btn-primary">Get Started</a>
+    </div>
+    <button class="nav-toggle" onclick="toggleNav()">☰</button>
+  </nav>
+  <div class="nav-mobile" id="navMobile">
+    <a href="#features">Features</a>
+    <a href="pages/login.html">Log In</a>
+    <a href="pages/register.html">Get Started →</a>
+  </div>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-eyebrow">AI-Powered Career Tools</div>
+      <h1 class="hero-title">Land your <span class="title-highlight">first job</span> faster.</h1>
+      <p class="hero-sub">CareerAI builds your CV, writes your cover letter, scores it against ATS systems, and preps you for interviews — in minutes, not days.</p>
+      <div class="hero-cta">
+        <a href="pages/register.html" class="btn-primary btn-lg">Start for Free</a>
+        <a href="#features" class="btn-ghost btn-lg">See what it does ↓</a>
+      </div>
+      <div class="hero-stats">
+        <div class="stat"><span class="stat-num">4</span><span class="stat-label">AI Tools</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-num">&lt;10s</span><span class="stat-label">Generation Time</span></div>
+        <div class="stat-divider"></div>
+        <div class="stat"><span class="stat-num">Free</span><span class="stat-label">Always</span></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="floating-card card-cv">
+        <div class="card-icon">📄</div>
+        <div class="card-text"><strong>CV Generated</strong><br>Professional format ready</div>
+      </div>
+      <div class="floating-card card-ats">
+        <div class="card-icon">✅</div>
+        <div class="card-text"><strong>ATS Score: 87/100</strong><br>Keyword match strong</div>
+      </div>
+      <div class="floating-card card-letter">
+        <div class="card-icon">✉️</div>
+        <div class="card-text"><strong>Cover Letter Done</strong><br>Tailored to your role</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="features" id="features">
+    <div class="section-header">
+      <p class="section-eyebrow">What CareerAI does</p>
+      <h2>Everything you need to get hired</h2>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📄</div>
+        <h3>CV Generator</h3>
+        <p>Enter your details once. Get a professionally formatted, ATS-friendly CV in seconds.</p>
+        <a href="pages/register.html" class="feature-link">Build my CV →</a>
+      </div>
+      <div class="feature-card featured">
+        <div class="feature-badge">Most Used</div>
+        <div class="feature-icon">✉️</div>
+        <h3>Cover Letter Generator</h3>
+        <p>Paste a job description. Get a tailored cover letter that speaks directly to the role.</p>
+        <a href="pages/register.html" class="feature-link">Write my letter →</a>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎯</div>
+        <h3>ATS Score Checker</h3>
+        <p>Upload your CV and job description. See exactly how you score and what to fix.</p>
+        <a href="pages/register.html" class="feature-link">Check my score →</a>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎤</div>
+        <h3>Interview Prep</h3>
+        <p>Get role-specific technical and behavioral questions with suggested answers to practice.</p>
+        <a href="pages/register.html" class="feature-link">Prep for interview →</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section class="how-it-works">
+    <div class="section-header">
+      <p class="section-eyebrow">The process</p>
+      <h2>From profile to job-ready in 5 minutes</h2>
+    </div>
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <h4>Create your account</h4>
+          <p>Sign up free. No credit card needed.</p>
+        </div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <h4>Enter your details</h4>
+          <p>Education, skills, and experience.</p>
+        </div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <h4>Generate everything</h4>
+          <p>CV, cover letter, ATS report, interview questions.</p>
+        </div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <h4>Download & apply</h4>
+          <p>PDF-ready documents in one click.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA BOTTOM -->
+  <section class="cta-section">
+    <h2>Ready to get hired?</h2>
+    <p>Join students and graduates using CareerAI to stand out.</p>
+    <a href="pages/register.html" class="btn-primary btn-lg">Create your free account</a>
+  </section>
+
+  <footer class="footer">
+    <div class="footer-brand">Career<span class="accent">AI</span></div>
+    <p>AI-Powered Career Assistant · Built for students & graduates</p>
+  </footer>
+
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>ATS Checker – CareerAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body class="dashboard-layout">
+
+  <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Career<span class="accent">AI</span></div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item"><span class="nav-item-icon">🏠</span> Dashboard</a>
+      <a href="cv-builder.html" class="nav-item"><span class="nav-item-icon">📄</span> CV Builder</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-item-icon">✉️</span> Cover Letter</a>
+      <a href="ats-checker.html" class="nav-item active" aria-current="page"><span class="nav-item-icon" aria-hidden="true">🎯</span> ATS Checker</a>
+      <a href="interview-prep.html" class="nav-item"><span class="nav-item-icon">🎤</span> Interview Prep</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <span id="userName">User</span>
+      </div>
+      <button onclick="logout()" style="margin-top:10px;background:none;border:none;color:var(--white-muted);font-size:0.78rem;cursor:pointer;">Log out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>🎯 ATS Score Checker <span class="info-tip" tabindex="0" role="img" aria-label="What is ATS? An Applicant Tracking System is software employers use to scan and rank CVs by keywords before a human reads them. A higher score means your CV is more likely to pass that automated scan." data-tip="An Applicant Tracking System (ATS) is software employers use to scan and rank CVs by keywords before a human reads them. A higher score means your CV is more likely to pass that automated scan.">i</span></h1>
+      <p>See how well your CV matches a job description and get improvement tips.</p>
+    </div>
+
+    <div class="tool-layout">
+      <!-- INPUT -->
+      <div class="tool-panel">
+        <h3>Upload & Analyse</h3>
+
+        <div class="form-group">
+          <label class="form-label">Your CV text</label>
+          <textarea class="form-control" id="ats_cv" rows="8" placeholder="Paste your CV text here…&#10;&#10;(Tip: use your generated CV from the CV Builder)"></textarea>
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+            <button class="btn-outline" style="font-size:0.8rem;padding:6px 14px;" onclick="loadSavedCV()">📄 Load saved CV</button>
+            <span style="font-size:0.75rem;color:var(--white-muted);">or paste manually above</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Job Description</label>
+          <textarea class="form-control" id="ats_jd" rows="7" placeholder="Paste the job description here. Include required skills, responsibilities, and qualifications for the best analysis…"></textarea>
+        </div>
+
+        <button class="btn-mint btn-full" id="atsBtn" onclick="runATSCheck()">
+          🎯 Analyse my CV
+        </button>
+        <button class="btn-outline btn-full" id="cancelATSBtn" style="margin-top:10px;" onclick="cancelATS()" hidden>Cancel analysis</button>
+      </div>
+
+      <!-- OUTPUT -->
+      <div style="display:flex;flex-direction:column;gap:16px;">
+
+        <!-- Score ring -->
+        <div class="tool-panel" id="scorePanel" hidden>
+          <h3>ATS Score</h3>
+          <div style="text-align:center;padding:12px 0;">
+            <div class="ats-score-ring" id="scoreRing" style="--pct:0">
+              <div class="ats-score-inner">
+                <span class="ats-score-num" id="scoreNum">0</span>
+                <span class="ats-score-label">/ 100</span>
+              </div>
+            </div>
+            <p id="scoreVerdict" style="font-size:0.9rem;margin-top:8px;font-weight:600;"></p>
+          </div>
+        </div>
+
+        <!-- Keywords -->
+        <div class="tool-panel" id="keywordsPanel" hidden>
+          <h3>Keyword Analysis</h3>
+          <p style="font-size:0.8rem;margin-bottom:10px;">Keywords found in your CV:</p>
+          <div class="keyword-tags" id="foundKeywords"></div>
+          <p style="font-size:0.8rem;margin-top:16px;margin-bottom:10px;">Missing keywords:</p>
+          <div class="keyword-tags" id="missingKeywords"></div>
+        </div>
+
+        <!-- Suggestions -->
+        <div class="tool-panel" id="suggestionsPanel" hidden>
+          <h3>Improvement Suggestions</h3>
+          <div id="suggestionsList" style="display:flex;flex-direction:column;gap:10px;"></div>
+        </div>
+
+        <!-- Placeholder -->
+        <div class="tool-panel" id="atsPlaceholder">
+          <h3>Your Results</h3>
+          <div class="tool-output" id="atsProgress" style="min-height:200px;" aria-live="polite">
+            <p class="output-placeholder">Run the analysis to see your ATS score, keyword matches, and improvement tips.</p>
+          </div>
+        </div>
+
+        <div class="alert alert-error" id="atsError" role="alert">Analysis failed. Please try again.</div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/main.js"></script>
+  <script>
+    if (!requireAuth()) { /* redirected */ }
+    setUserIdentity();
+
+    function showATSError(message) {
+      const el = document.getElementById('atsError');
+      el.textContent = message;
+      el.classList.add('visible');
+    }
+
+    async function loadSavedATSReport() {
+      try {
+        const { data } = await apiFetch('/api/ats/latest');
+        if (data.success && data.report) {
+          document.getElementById('atsError').classList.remove('visible');
+          document.getElementById('scorePanel').hidden = false;
+          document.getElementById('keywordsPanel').hidden = false;
+          document.getElementById('suggestionsPanel').hidden = false;
+          document.getElementById('atsPlaceholder').hidden = true;
+          renderResults({
+            score: data.report.score,
+            foundKeywords: [],
+            missingKeywords: [],
+            suggestions: data.report.recommendations || []
+          });
+        }
+      } catch {
+        // History is optional.
+      }
+    }
+
+    loadSavedATSReport();
+
+    function loadSavedCV() {
+      const cv = localStorage.getItem('careerai_cv');
+      if (cv) { document.getElementById('ats_cv').value = cv; showToast('Saved CV loaded.', 'success'); }
+      else showToast('No saved CV found. Generate one in the CV Builder first.', 'info');
+    }
+
+    let atsAbort = null;
+    function cancelATS() { if (atsAbort) atsAbort.abort(); }
+
+    async function runATSCheck() {
+      if (atsAbort) return;
+      const btn = document.getElementById('atsBtn');
+      const cvText = document.getElementById('ats_cv').value;
+      const jdText = document.getElementById('ats_jd').value;
+      document.getElementById('atsError').classList.remove('visible');
+
+      if (!cvText || !jdText) {
+        showToast('Please provide both your CV and the job description.', 'error'); return;
+      }
+
+      atsAbort = new AbortController();
+      btn.innerHTML = '<span class="loading-spinner"></span> Analysing…'; btn.disabled = true;
+      document.getElementById('cancelATSBtn').hidden = false;
+      document.getElementById('atsPlaceholder').hidden = false;
+      const stopProgress = startStagedProgress(document.getElementById('atsProgress'), [
+        'Scanning your CV…',
+        'Extracting job keywords…',
+        'Comparing against the role…',
+        'Scoring and writing tips…'
+      ]);
+
+      try {
+        const { data: result } = await apiFetch('/api/ats/check', {
+          method: 'POST', body: { cvText, jobDescription: jdText }, signal: atsAbort.signal
+        });
+        stopProgress();
+        if (result.success) { renderResults(result.data); showToast('Analysis complete.', 'success'); }
+        else showATSError(result.message || 'ATS analysis failed. Please try again.');
+      } catch (err) {
+        stopProgress();
+        document.getElementById('atsProgress').innerHTML =
+          '<p class="output-placeholder">Run the analysis to see your ATS score, keyword matches, and improvement tips.</p>';
+        if (err && err.name === 'AbortError') showToast('Analysis cancelled.', 'info');
+        else showATSError(describeError(err));
+      } finally {
+        atsAbort = null;
+        btn.innerHTML = '🎯 Analyse my CV'; btn.disabled = false;
+        document.getElementById('cancelATSBtn').hidden = true;
+      }
+    }
+
+    function renderResults(data) {
+      document.getElementById('atsPlaceholder').hidden = true;
+      const score = data.score || 0;
+
+      // Score ring
+      document.getElementById('scorePanel').hidden = false;
+      document.getElementById('scoreRing').style.setProperty('--pct', score);
+      const numEl = document.getElementById('scoreNum');
+      // Animate count
+      let cur = 0;
+      const interval = setInterval(() => {
+        cur = Math.min(cur + 2, score);
+        numEl.textContent = cur;
+        if (cur >= score) clearInterval(interval);
+      }, 20);
+      const verdict = score >= 80 ? '🟢 Strong match' : score >= 60 ? '🟡 Good — room to improve' : '🔴 Needs improvement';
+      document.getElementById('scoreVerdict').textContent = verdict;
+      const ring = document.getElementById('scoreRing');
+      ring.setAttribute('role', 'img');
+      ring.setAttribute('aria-label', `ATS score: ${score} out of 100. ${verdict.replace(/^[^A-Za-z]+/, '')}.`);
+
+      // Keywords
+      document.getElementById('keywordsPanel').hidden = false;
+      const foundEl = document.getElementById('foundKeywords');
+      const missEl  = document.getElementById('missingKeywords');
+      foundEl.innerHTML = ''; missEl.innerHTML = '';
+      (data.foundKeywords || []).forEach(k => {
+        foundEl.innerHTML += `<span class="keyword-tag found">✓ ${escapeHtml(k)}</span>`;
+      });
+      (data.missingKeywords || []).forEach(k => {
+        missEl.innerHTML += `<span class="keyword-tag missing">✗ ${escapeHtml(k)}</span>`;
+      });
+
+      // Suggestions
+      document.getElementById('suggestionsPanel').hidden = false;
+      const sugList = document.getElementById('suggestionsList');
+      sugList.innerHTML = '';
+      (data.suggestions || []).forEach((s, i) => {
+        sugList.innerHTML += `<div style="display:flex;gap:12px;padding:12px;background:var(--navy);border:1px solid var(--border);border-radius:8px;">
+          <span style="color:var(--indigo-lt);font-weight:700;font-size:0.9rem;flex-shrink:0;">${i+1}.</span>
+          <span style="font-size:0.87rem;color:var(--white-dim);">${escapeHtml(s)}</span>
+        </div>`;
+      });
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Cover Letter – CareerAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body class="dashboard-layout">
+
+  <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Career<span class="accent">AI</span></div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item"><span class="nav-item-icon">🏠</span> Dashboard</a>
+      <a href="cv-builder.html" class="nav-item"><span class="nav-item-icon">📄</span> CV Builder</a>
+      <a href="cover-letter.html" class="nav-item active" aria-current="page"><span class="nav-item-icon" aria-hidden="true">✉️</span> Cover Letter</a>
+      <a href="ats-checker.html" class="nav-item"><span class="nav-item-icon">🎯</span> ATS Checker</a>
+      <a href="interview-prep.html" class="nav-item"><span class="nav-item-icon">🎤</span> Interview Prep</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <span id="userName">User</span>
+      </div>
+      <button onclick="logout()" style="margin-top:10px;background:none;border:none;color:var(--white-muted);font-size:0.78rem;cursor:pointer;">Log out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>✉️ Cover Letter Generator</h1>
+      <p>Paste the job details and get a tailored cover letter in seconds.</p>
+    </div>
+
+    <div class="tool-layout">
+      <!-- INPUT -->
+      <div class="tool-panel">
+        <h3>Job Details</h3>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Job Title</label>
+            <input class="form-control" id="cl_jobtitle" placeholder="Software Engineer Intern"/>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Company Name</label>
+            <input class="form-control" id="cl_company" placeholder="Google Ghana"/>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Job Description</label>
+          <textarea class="form-control" id="cl_jd" rows="7" placeholder="Paste the full job description here. The more detail you provide, the more tailored your cover letter will be…"></textarea>
+          <span class="form-hint">Paste as much of the original job posting as possible.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Your name</label>
+          <input class="form-control" id="cl_name" placeholder="Kwame Mensah"/>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Your background summary (optional)</label>
+          <textarea class="form-control" id="cl_background" rows="3" placeholder="Final-year CS student at UCC with experience in React and Node.js. Built 3 production apps. Strong communicator."></textarea>
+          <span class="form-hint">Leave blank to use your saved CV profile.</span>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Tone</label>
+          <select class="form-control" id="cl_tone">
+            <option value="professional">Professional</option>
+            <option value="enthusiastic">Enthusiastic</option>
+            <option value="concise">Concise & direct</option>
+            <option value="creative">Creative</option>
+          </select>
+        </div>
+
+        <button class="btn-mint btn-full" id="clBtn" onclick="generateCoverLetter()">
+          ✨ Generate cover letter
+        </button>
+        <button class="btn-outline btn-full" id="cancelCLBtn" style="margin-top:10px;" onclick="cancelCL()" hidden>Cancel generation</button>
+        <button class="btn-outline btn-full" style="margin-top:10px;" onclick="clearCLForm()">Clear form</button>
+        <p class="form-hint" style="text-align:center;margin-top:8px;">Tip: press Ctrl + Enter to generate.</p>
+      </div>
+
+      <!-- OUTPUT -->
+      <div>
+        <div class="tool-panel">
+          <h3>Your Cover Letter</h3>
+          <div class="tool-output" id="clOutput" style="min-height:340px;" aria-live="polite">
+            <p class="output-placeholder">Your cover letter will appear here.</p>
+          </div>
+          <textarea class="output-editor" id="clEditor" hidden aria-label="Editable cover letter"></textarea>
+          <p class="edit-hint" id="clEditHint" hidden>You can edit the text above before downloading or copying.</p>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;" id="clActions" hidden>
+          <button class="btn-primary" onclick="downloadCL()">⬇ Download PDF</button>
+          <button class="btn-outline" onclick="copyCL()">📋 Copy text</button>
+          <button class="btn-outline" onclick="regenerateCL()">🔄 Regenerate</button>
+          <button class="btn-outline" onclick="deleteSavedCL()">🗑 Delete saved</button>
+        </div>
+        <div class="alert alert-error" id="clError" role="alert" style="margin-top:12px;">Failed to generate cover letter. Please try again.</div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/main.js"></script>
+  <script>
+    if (!requireAuth()) { /* redirected */ }
+    const user = getStoredUser();
+    const storedProfile = getStoredProfile();
+    setUserIdentity();
+    const _name = getProfileName();
+    if (_name) document.getElementById('cl_name').value = _name;
+
+    function showCLError(message) {
+      const el = document.getElementById('clError');
+      el.textContent = message;
+      el.classList.add('visible');
+    }
+
+    function showCLOutput(text) {
+      document.getElementById('clOutput').hidden = true;
+      const editor = document.getElementById('clEditor');
+      editor.hidden = false;
+      editor.value = text || '';
+      document.getElementById('clEditHint').hidden = false;
+      document.getElementById('clActions').hidden = false;
+    }
+
+    function resetCLOutput(placeholder) {
+      const editor = document.getElementById('clEditor');
+      editor.hidden = true; editor.value = '';
+      document.getElementById('clEditHint').hidden = true;
+      document.getElementById('clActions').hidden = true;
+      const out = document.getElementById('clOutput');
+      out.hidden = false;
+      out.innerHTML = `<p class="output-placeholder">${placeholder}</p>`;
+    }
+
+    function currentCLText() {
+      const editor = document.getElementById('clEditor');
+      if (!editor.hidden) return editor.value;
+      return localStorage.getItem('careerai_cl') || '';
+    }
+
+    document.getElementById('clEditor').addEventListener('input', (e) => {
+      localStorage.setItem('careerai_cl', e.target.value);
+    });
+
+    let clAbort = null;
+
+    function fillFieldsFromProfile() {
+      const profile = JSON.parse(localStorage.getItem('careerai_profile') || '{}');
+      if (profile.title) document.getElementById('cl_jobtitle').value = profile.title;
+      if (profile.name) document.getElementById('cl_name').value = profile.name;
+      if (profile.fullname && !document.getElementById('cl_name').value) document.getElementById('cl_name').value = profile.fullname;
+      if (profile.cv && profile.cv.generated_cv && !document.getElementById('cl_background').value) {
+        document.getElementById('cl_background').value = profile.cv.generated_cv;
+      }
+    }
+
+    function syncProfileFromCoverLetter(payload, coverLetter) {
+      const existing = JSON.parse(localStorage.getItem('careerai_profile') || '{}');
+      localStorage.setItem('careerai_profile', JSON.stringify({
+        ...existing,
+        fullname: payload.userName || existing.fullname || existing.name,
+        title: payload.jobTitle || existing.title,
+        companyName: payload.companyName,
+        coverLetter,
+        cv: {
+          ...(existing.cv || {}),
+          generated_cv: localStorage.getItem('careerai_cv') || existing.cv?.generated_cv || ''
+        }
+      }));
+    }
+
+    fillFieldsFromProfile();
+
+    async function loadSavedCoverLetter() {
+      try {
+        const { data } = await apiFetch('/api/cover-letter/latest');
+        if (data.success && data.coverLetter) {
+          document.getElementById('cl_jobtitle').value = data.coverLetter.job_title || '';
+          document.getElementById('cl_company').value = data.coverLetter.company_name || '';
+          if (data.coverLetter.content) {
+            showCLOutput(data.coverLetter.content);
+            localStorage.setItem('careerai_cl', data.coverLetter.content);
+          }
+          syncProfileFromCoverLetter({
+            jobTitle: data.coverLetter.job_title || '',
+            companyName: data.coverLetter.company_name || '',
+            userName: document.getElementById('cl_name').value || storedProfile.fullname || user.fullname || ''
+          }, data.coverLetter.content || '');
+        }
+      } catch {
+        // Non-fatal; page still works without history.
+      }
+    }
+
+    loadSavedCoverLetter();
+
+    document.querySelectorAll('.tool-panel .form-control').forEach(el =>
+      el.addEventListener('input', () => markUnsaved(true)));
+
+    function setCLGenerating(on) {
+      const btn = document.getElementById('clBtn');
+      btn.disabled = on;
+      btn.innerHTML = on ? '<span class="loading-spinner"></span> Writing…' : '✨ Generate cover letter';
+      document.getElementById('cancelCLBtn').hidden = !on;
+    }
+
+    async function generateCoverLetter() {
+      if (clAbort) return;
+      const out = document.getElementById('clOutput');
+      document.getElementById('clError').classList.remove('visible');
+      document.getElementById('clActions').hidden = true;
+      document.getElementById('clEditor').hidden = true;
+      document.getElementById('clEditHint').hidden = true;
+      out.hidden = false;
+
+      const payload = {
+        jobTitle:    document.getElementById('cl_jobtitle').value,
+        companyName: document.getElementById('cl_company').value,
+        jobDescription: document.getElementById('cl_jd').value,
+        userName:    document.getElementById('cl_name').value,
+        background:  document.getElementById('cl_background').value,
+        tone:        document.getElementById('cl_tone').value,
+        cvContext:   localStorage.getItem('careerai_cv') || ''
+      };
+
+      if (!payload.jobTitle || !payload.companyName || !payload.jobDescription) {
+        out.innerHTML = '<p style="color:var(--danger)">Please fill in job title, company, and job description.</p>';
+        return;
+      }
+
+      clAbort = new AbortController();
+      setCLGenerating(true);
+      const stopProgress = startStagedProgress(out, [
+        'Reading the job description…',
+        'Matching your background…',
+        'Drafting your letter…',
+        'Refining the tone…'
+      ]);
+
+      try {
+        const { data: result } = await apiFetch('/api/cover-letter/generate', { method: 'POST', body: payload, signal: clAbort.signal });
+        stopProgress();
+        if (result.success) {
+          showCLOutput(result.coverLetter);
+          localStorage.setItem('careerai_cl', result.coverLetter);
+          syncProfileFromCoverLetter(payload, result.coverLetter);
+          markUnsaved(false);
+          showToast('Your cover letter is ready.', 'success');
+        } else {
+          showCLError(result.message || 'Failed to generate cover letter. Please try again.');
+          out.innerHTML = '<p class="output-placeholder">Generation did not complete.</p>';
+        }
+      } catch (err) {
+        stopProgress();
+        if (err && err.name === 'AbortError') {
+          out.innerHTML = '<p class="output-placeholder">Generation cancelled.</p>';
+          showToast('Generation cancelled.', 'info');
+        } else {
+          showCLError(describeError(err));
+          out.innerHTML = '<p class="output-placeholder">Generation failed.</p>';
+        }
+      } finally {
+        clAbort = null;
+        setCLGenerating(false);
+      }
+    }
+
+    function cancelCL() { if (clAbort) clAbort.abort(); }
+
+    function copyCL() {
+      navigator.clipboard.writeText(currentCLText())
+        .then(() => showToast('Cover letter copied to clipboard.', 'success'))
+        .catch(() => showToast('Could not copy to clipboard.', 'error'));
+    }
+    function regenerateCL() { generateCoverLetter(); }
+
+    async function downloadCL() {
+      try {
+        const { ok, response } = await apiFetch('/api/cover-letter/download', {
+          method: 'POST', body: { content: currentCLText() }, raw: true
+        });
+        if (!ok) { showToast('Could not generate the PDF. Please try again.', 'error'); return; }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'cover-letter.pdf'; a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        showToast(describeError(err), 'error');
+      }
+    }
+
+    let clDeleteTimer = null;
+    function deleteSavedCL() {
+      if (clDeleteTimer) return;
+      const snapshot = currentCLText();
+      localStorage.removeItem('careerai_cl');
+      resetCLOutput('Saved cover letter deleted.');
+
+      clDeleteTimer = setTimeout(async () => {
+        clDeleteTimer = null;
+        try {
+          const { data } = await apiFetch('/api/cover-letter/latest', { method: 'DELETE' });
+          if (!data.success) showToast(data.message || 'Delete failed.', 'error');
+        } catch (err) {
+          showToast(describeError(err), 'error');
+        }
+      }, 5000);
+
+      showToast('Saved cover letter deleted.', 'info', 5000, {
+        label: 'Undo',
+        onClick: () => {
+          if (clDeleteTimer) { clearTimeout(clDeleteTimer); clDeleteTimer = null; }
+          if (snapshot) {
+            localStorage.setItem('careerai_cl', snapshot);
+            showCLOutput(snapshot);
+          }
+          showToast('Restored.', 'success');
+        }
+      });
+    }
+
+    function clearCLForm() {
+      const fields = [...document.querySelectorAll('.tool-panel .form-control')].filter(el => el.tagName !== 'SELECT');
+      const snapshot = fields.map(el => el.value);
+      fields.forEach(el => { el.value = ''; });
+      markUnsaved(false);
+      showToast('Form cleared.', 'info', 6000, {
+        label: 'Undo',
+        onClick: () => {
+          fields.forEach((el, i) => { el.value = snapshot[i]; });
+          showToast('Form restored.', 'success');
+        }
+      });
+    }
+
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generateCoverLetter();
+    });
+  </script>
+</body>
+</html>

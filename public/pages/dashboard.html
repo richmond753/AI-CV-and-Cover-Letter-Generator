@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dashboard – CareerAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body class="dashboard-layout">
+
+  <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Career<span class="accent">AI</span></div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item active" aria-current="page">
+        <span class="nav-item-icon" aria-hidden="true">🏠</span> Dashboard
+      </a>
+      <a href="cv-builder.html" class="nav-item">
+        <span class="nav-item-icon">📄</span> CV Builder
+      </a>
+      <a href="cover-letter.html" class="nav-item">
+        <span class="nav-item-icon">✉️</span> Cover Letter
+      </a>
+      <a href="ats-checker.html" class="nav-item">
+        <span class="nav-item-icon">🎯</span> ATS Checker
+      </a>
+      <a href="interview-prep.html" class="nav-item">
+        <span class="nav-item-icon">🎤</span> Interview Prep
+      </a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">K</div>
+        <span id="userName">Loading…</span>
+      </div>
+      <button onclick="logout()" style="margin-top:10px; background:none; border:none; color:var(--white-muted); font-size:0.78rem; cursor:pointer;">Log out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <div class="page-header">
+      <h1 id="greetingText">Good morning 👋</h1>
+      <p>Your career toolkit is ready. What would you like to work on today?</p>
+    </div>
+
+    <div class="dash-grid">
+      <a href="cv-builder.html" class="dash-card">
+        <div class="dash-card-icon">📄</div>
+        <h3>Build your CV <span class="dash-card-arrow">→</span></h3>
+        <p>Enter your details and generate a polished, ATS-ready CV.</p>
+      </a>
+      <a href="cover-letter.html" class="dash-card">
+        <div class="dash-card-icon">✉️</div>
+        <h3>Write a cover letter <span class="dash-card-arrow">→</span></h3>
+        <p>Paste a job description and get a tailored cover letter.</p>
+      </a>
+      <a href="ats-checker.html" class="dash-card">
+        <div class="dash-card-icon">🎯</div>
+        <h3>Check ATS score <span class="dash-card-arrow">→</span></h3>
+        <p>See how well your CV matches a job description.</p>
+      </a>
+      <a href="interview-prep.html" class="dash-card">
+        <div class="dash-card-icon">🎤</div>
+        <h3>Prep for interviews <span class="dash-card-arrow">→</span></h3>
+        <p>Get role-specific questions with suggested answers.</p>
+      </a>
+    </div>
+
+    <div style="background:var(--navy-card);border:1px solid var(--border);border-radius:16px;padding:24px;">
+      <h3 style="margin-bottom:8px;">Your journey</h3>
+      <p style="font-size:0.87rem;margin-bottom:18px;">Follow these steps to complete your job application.</p>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="journey-step" id="j1"><span class="j-num">1</span> Create your account <span class="j-check">✓</span></div>
+        <div class="journey-step" id="j2"><span class="j-num">2</span> Build your CV</div>
+        <div class="journey-step" id="j3"><span class="j-num">3</span> Write your cover letter</div>
+        <div class="journey-step" id="j4"><span class="j-num">4</span> Check your ATS score</div>
+        <div class="journey-step" id="j5"><span class="j-num">5</span> Practice interview questions</div>
+        <div class="journey-step" id="j6"><span class="j-num">6</span> Download your documents</div>
+      </div>
+    </div>
+  </main>
+
+  <style>
+    .journey-step {
+      display:flex; align-items:center; gap:12px;
+      padding:10px 14px; border-radius:8px;
+      background:var(--navy); border:1px solid var(--border);
+      font-size:0.87rem; color:var(--white-dim);
+    }
+    .journey-step .j-num {
+      width:22px; height:22px; border-radius:50%;
+      background:var(--navy-mid); border:1px solid var(--border);
+      display:flex; align-items:center; justify-content:center;
+      font-size:0.72rem; font-weight:700; flex-shrink:0;
+    }
+    .journey-step.done { color:var(--mint); border-color:rgba(62,237,199,0.2); background:rgba(62,237,199,0.05); }
+    .journey-step.done .j-num { background:var(--mint); color:var(--navy); border-color:var(--mint); }
+    .j-check { margin-left:auto; font-size:0.85rem; }
+  </style>
+
+  <script src="../js/main.js"></script>
+  <script>
+    if (!requireAuth()) { /* redirected to login */ }
+    setUserIdentity();
+
+    document.getElementById('j1').classList.add('done');
+    if (localStorage.getItem('careerai_cv')) document.getElementById('j2').classList.add('done');
+    if (localStorage.getItem('careerai_cl')) document.getElementById('j3').classList.add('done');
+  </script>
+</body>
+</html>

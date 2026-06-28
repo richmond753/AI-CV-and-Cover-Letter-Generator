@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>CV Builder – CareerAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body class="dashboard-layout">
+
+  <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Career<span class="accent">AI</span></div>
+    <nav class="sidebar-nav">
+      <a href="dashboard.html" class="nav-item"><span class="nav-item-icon">🏠</span> Dashboard</a>
+      <a href="cv-builder.html" class="nav-item active" aria-current="page"><span class="nav-item-icon" aria-hidden="true">📄</span> CV Builder</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-item-icon">✉️</span> Cover Letter</a>
+      <a href="ats-checker.html" class="nav-item"><span class="nav-item-icon">🎯</span> ATS Checker</a>
+      <a href="interview-prep.html" class="nav-item"><span class="nav-item-icon">🎤</span> Interview Prep</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <span id="userName">User</span>
+      </div>
+      <button onclick="logout()" style="margin-top:10px;background:none;border:none;color:var(--white-muted);font-size:0.78rem;cursor:pointer;">Log out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <main class="main-content">
+    <div class="page-header">
+      <h1>📄 CV Builder</h1>
+      <p>Fill in your details and let AI generate a professional CV.</p>
+    </div>
+
+    <div class="tool-layout">
+      <!-- INPUT PANEL -->
+      <div class="tool-panel" style="max-height:85vh;overflow-y:auto;">
+        <h3>Your Information</h3>
+
+        <!-- Personal -->
+        <div style="margin-bottom:20px;">
+          <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mint);margin-bottom:12px;">Personal Details</p>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="cv_name" placeholder="Kwame Mensah"/></div>
+            <div class="form-group"><label class="form-label">Job Title Target</label><input class="form-control" id="cv_title" placeholder="Software Engineer"/></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label class="form-label">Email</label><input class="form-control" id="cv_email" type="email" placeholder="kwame@email.com"/></div>
+            <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="cv_phone" placeholder="+233 20 000 0000"/></div>
+          </div>
+          <div class="form-group"><label class="form-label">Location</label><input class="form-control" id="cv_location" placeholder="Accra, Ghana"/></div>
+          <div class="form-group"><label class="form-label">LinkedIn / Portfolio (optional)</label><input class="form-control" id="cv_links" placeholder="linkedin.com/in/kwamemensah"/></div>
+        </div>
+
+        <!-- Education -->
+        <div style="margin-bottom:20px;">
+          <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mint);margin-bottom:12px;">Education</p>
+          <div class="form-group"><label class="form-label">Education history</label>
+            <textarea class="form-control" id="cv_education" rows="3" placeholder="BSc Computer Science, University of Ghana, 2020–2024 (GPA: 3.7)&#10;Relevant courses: Data Structures, Algorithms, Web Dev"></textarea>
+          </div>
+        </div>
+
+        <!-- Experience -->
+        <div style="margin-bottom:20px;">
+          <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mint);margin-bottom:12px;">Work Experience</p>
+          <div class="form-group"><label class="form-label">Roles & responsibilities</label>
+            <textarea class="form-control" id="cv_experience" rows="4" placeholder="Software Intern – Tech Ghana Ltd (Jun–Aug 2023)&#10;- Built REST APIs with Node.js serving 500+ daily users&#10;- Reduced page load time by 40% via caching"></textarea>
+          </div>
+        </div>
+
+        <!-- Skills -->
+        <div style="margin-bottom:20px;">
+          <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mint);margin-bottom:12px;">Skills</p>
+          <div class="form-group"><label class="form-label">Technical & soft skills</label>
+            <textarea class="form-control" id="cv_skills" rows="2" placeholder="JavaScript, Python, React, Node.js, MySQL, Git, Teamwork, Communication"></textarea>
+          </div>
+        </div>
+
+        <!-- Projects -->
+        <div style="margin-bottom:20px;">
+          <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mint);margin-bottom:12px;">Projects</p>
+          <div class="form-group"><label class="form-label">Notable projects</label>
+            <textarea class="form-control" id="cv_projects" rows="3" placeholder="CareerAI – Full-stack web app using Node.js + Gemini API&#10;E-commerce site – React + Firebase, 200 users at launch"></textarea>
+          </div>
+        </div>
+
+        <!-- Certifications -->
+        <div style="margin-bottom:24px;">
+          <p style="font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--mint);margin-bottom:12px;">Certifications</p>
+          <div class="form-group"><label class="form-label">Certifications & awards (optional)</label>
+            <textarea class="form-control" id="cv_certs" rows="2" placeholder="Google IT Support Certificate (2023)&#10;Meta Front-End Developer Certificate (2024)"></textarea>
+          </div>
+        </div>
+
+        <button class="btn-mint btn-full" id="generateCVBtn" onclick="generateCV()">
+          ✨ Generate my CV
+        </button>
+        <button class="btn-outline btn-full" id="cancelCVBtn" style="margin-top:10px;" onclick="cancelCV()" hidden>Cancel generation</button>
+        <button class="btn-outline btn-full" id="clearCVBtn" style="margin-top:10px;" onclick="clearCVForm()">Clear form</button>
+        <p class="form-hint" style="text-align:center;margin-top:8px;">Tip: press Ctrl + Enter to generate.</p>
+      </div>
+
+      <!-- OUTPUT PANEL -->
+      <div>
+        <div class="tool-panel">
+          <h3>Generated CV</h3>
+          <div class="tool-output" id="cvOutput" aria-live="polite">
+            <p class="output-placeholder">Your CV will appear here after generation.</p>
+          </div>
+          <textarea class="output-editor" id="cvEditor" hidden aria-label="Editable generated CV"></textarea>
+          <p class="edit-hint" id="cvEditHint" hidden>You can edit the text above before downloading or copying.</p>
+        </div>
+        <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;" id="cvActions" hidden>
+          <button class="btn-primary" onclick="downloadCV()">⬇ Download PDF</button>
+          <button class="btn-outline" onclick="copyCV()">📋 Copy text</button>
+          <button class="btn-outline" onclick="generateCV()">🔄 Regenerate</button>
+          <button class="btn-outline" onclick="deleteSavedCV()">🗑 Delete saved</button>
+        </div>
+        <div class="alert alert-error" id="cvError" role="alert" style="margin-top:12px;">Failed to generate CV. Please try again.</div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/main.js"></script>
+  <script>
+    if (!requireAuth()) { /* redirected */ }
+    const user = getStoredUser();
+    const activeName = getProfileName();
+    setUserIdentity();
+
+    function showCVError(message) {
+      const el = document.getElementById('cvError');
+      el.textContent = message;
+      el.classList.add('visible');
+    }
+
+    // Render generated text into the editable area and wire up live persistence.
+    function showCVOutput(text) {
+      const out = document.getElementById('cvOutput');
+      const editor = document.getElementById('cvEditor');
+      out.hidden = true;
+      editor.hidden = false;
+      editor.value = text || '';
+      document.getElementById('cvEditHint').hidden = false;
+      document.getElementById('cvActions').hidden = false;
+    }
+
+    function resetCVOutput(placeholder) {
+      const out = document.getElementById('cvOutput');
+      const editor = document.getElementById('cvEditor');
+      editor.hidden = true;
+      editor.value = '';
+      document.getElementById('cvEditHint').hidden = true;
+      document.getElementById('cvActions').hidden = true;
+      out.hidden = false;
+      out.innerHTML = `<p class="output-placeholder">${placeholder}</p>`;
+    }
+
+    // Single source of truth for the current CV text (edited value wins).
+    function currentCVText() {
+      const editor = document.getElementById('cvEditor');
+      if (!editor.hidden) return editor.value;
+      return localStorage.getItem('careerai_cv') || '';
+    }
+
+    // Persist edits locally so download/copy use the tweaked text.
+    document.getElementById('cvEditor').addEventListener('input', (e) => {
+      localStorage.setItem('careerai_cv', e.target.value);
+    });
+
+    let cvAbort = null; // AbortController for the in-flight generation.
+
+    function syncProfileFromFields(data) {
+      const profile = {
+        fullname: data.name,
+        email: data.email,
+        phone: data.phone,
+        location: data.location,
+        links: data.links,
+        title: data.title,
+        cv: {
+          education: data.education,
+          experience: data.experience,
+          skills: data.skills,
+          projects: data.projects,
+          certifications: data.certifications,
+          generated_cv: localStorage.getItem('careerai_cv') || ''
+        }
+      };
+
+      localStorage.setItem('careerai_profile', JSON.stringify(profile));
+    }
+
+    function fillFieldsFromProfile() {
+      const profile = JSON.parse(localStorage.getItem('careerai_profile') || '{}');
+      const cv = profile.cv || {};
+      const mapping = {
+        cv_name: profile.fullname || user.fullname || '',
+        cv_email: profile.email || '',
+        cv_phone: profile.phone || '',
+        cv_location: profile.location || '',
+        cv_links: profile.links || '',
+        cv_title: profile.title || '',
+        cv_education: cv.education || '',
+        cv_experience: cv.experience || '',
+        cv_skills: cv.skills || '',
+        cv_projects: cv.projects || '',
+        cv_certs: cv.certifications || ''
+      };
+
+      Object.entries(mapping).forEach(([id, value]) => {
+        if (value) document.getElementById(id).value = value;
+      });
+    }
+
+    async function loadSavedCV() {
+      try {
+        const { data } = await apiFetch('/api/cv/latest');
+        if (data.success && data.cv) {
+          document.getElementById('cv_education').value = data.cv.education || '';
+          document.getElementById('cv_experience').value = data.cv.experience || '';
+          document.getElementById('cv_skills').value = data.cv.skills || '';
+          document.getElementById('cv_projects').value = data.cv.projects || '';
+          document.getElementById('cv_certs').value = data.cv.certifications || '';
+          if (data.cv.generated_cv) {
+            showCVOutput(data.cv.generated_cv);
+            localStorage.setItem('careerai_cv', data.cv.generated_cv);
+          }
+          syncProfileFromFields({
+            name: document.getElementById('cv_name').value || activeName,
+            email: document.getElementById('cv_email').value,
+            phone: document.getElementById('cv_phone').value,
+            location: document.getElementById('cv_location').value,
+            links: document.getElementById('cv_links').value,
+            title: document.getElementById('cv_title').value,
+            education: data.cv.education || '',
+            experience: data.cv.experience || '',
+            skills: data.cv.skills || '',
+            projects: data.cv.projects || '',
+            certifications: data.cv.certifications || ''
+          });
+        } else {
+          document.getElementById('cvOutput').innerHTML = '<p class="output-placeholder">No saved CV found yet.</p>';
+        }
+      } catch {
+        document.getElementById('cvOutput').innerHTML = '<p class="output-placeholder">Could not load saved CV.</p>';
+      }
+    }
+
+    fillFieldsFromProfile();
+    loadSavedCV();
+
+    // Warn before leaving with unsaved edits.
+    document.querySelectorAll('.tool-panel .form-control').forEach(el =>
+      el.addEventListener('input', () => markUnsaved(true)));
+
+    function setCVGenerating(on) {
+      const btn = document.getElementById('generateCVBtn');
+      const cancel = document.getElementById('cancelCVBtn');
+      btn.disabled = on;
+      btn.innerHTML = on ? '<span class="loading-spinner"></span> Generating…' : '✨ Generate my CV';
+      cancel.hidden = !on;
+    }
+
+    async function generateCV() {
+      if (cvAbort) return; // a generation is already running
+      const out = document.getElementById('cvOutput');
+      document.getElementById('cvError').classList.remove('visible');
+      document.getElementById('cvActions').hidden = true;
+      document.getElementById('cvEditor').hidden = true;
+      document.getElementById('cvEditHint').hidden = true;
+      out.hidden = false;
+
+      const data = {
+        name: document.getElementById('cv_name').value,
+        title: document.getElementById('cv_title').value,
+        email: document.getElementById('cv_email').value,
+        phone: document.getElementById('cv_phone').value,
+        location: document.getElementById('cv_location').value,
+        links: document.getElementById('cv_links').value,
+        education: document.getElementById('cv_education').value,
+        experience: document.getElementById('cv_experience').value,
+        skills: document.getElementById('cv_skills').value,
+        projects: document.getElementById('cv_projects').value,
+        certifications: document.getElementById('cv_certs').value
+      };
+
+      if (!data.name || !data.education) {
+        out.innerHTML = '<p style="color:var(--danger)">Please fill in at least your name and education.</p>';
+        return;
+      }
+
+      cvAbort = new AbortController();
+      setCVGenerating(true);
+      const stopProgress = startStagedProgress(out, [
+        'Analysing your details…',
+        'Structuring your experience…',
+        'Writing impactful bullet points…',
+        'Polishing the wording…'
+      ]);
+
+      try {
+        const { data: result } = await apiFetch('/api/cv/generate', { method: 'POST', body: data, signal: cvAbort.signal });
+        stopProgress();
+        if (result.success) {
+          showCVOutput(result.cv);
+          localStorage.setItem('careerai_cv', result.cv);
+          syncProfileFromFields(data);
+          markUnsaved(false);
+          showToast('Your CV is ready.', 'success');
+        } else {
+          showCVError(result.message || 'Failed to generate CV. Please try again.');
+          out.innerHTML = '<p class="output-placeholder">Generation did not complete.</p>';
+        }
+      } catch (err) {
+        stopProgress();
+        if (err && err.name === 'AbortError') {
+          out.innerHTML = '<p class="output-placeholder">Generation cancelled.</p>';
+          showToast('Generation cancelled.', 'info');
+        } else {
+          showCVError(describeError(err));
+          out.innerHTML = '<p class="output-placeholder">Generation failed.</p>';
+        }
+      } finally {
+        cvAbort = null;
+        setCVGenerating(false);
+      }
+    }
+
+    function cancelCV() {
+      if (cvAbort) cvAbort.abort();
+    }
+
+    async function downloadCV() {
+      try {
+        const { ok, response } = await apiFetch('/api/cv/download', {
+          method: 'POST', body: { cv: currentCVText() }, raw: true
+        });
+        if (!ok) { showToast('Could not generate the PDF. Please try again.', 'error'); return; }
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = 'my-cv.pdf'; a.click();
+        URL.revokeObjectURL(url);
+      } catch (err) {
+        showToast(describeError(err), 'error');
+      }
+    }
+
+    function copyCV() {
+      navigator.clipboard.writeText(currentCVText())
+        .then(() => showToast('CV copied to clipboard.', 'success'))
+        .catch(() => showToast('Could not copy to clipboard.', 'error'));
+    }
+
+    // Delete with a short restore window: the server call is deferred so an
+    // "Undo" can cancel it before anything is actually removed.
+    let cvDeleteTimer = null;
+    function deleteSavedCV() {
+      if (cvDeleteTimer) return;
+      const snapshot = currentCVText();
+      localStorage.removeItem('careerai_cv');
+      resetCVOutput('Saved CV deleted.');
+
+      cvDeleteTimer = setTimeout(async () => {
+        cvDeleteTimer = null;
+        try {
+          const { data } = await apiFetch('/api/cv/latest', { method: 'DELETE' });
+          if (!data.success) showToast(data.message || 'Delete failed.', 'error');
+        } catch (err) {
+          showToast(describeError(err), 'error');
+        }
+      }, 5000);
+
+      showToast('Saved CV deleted.', 'info', 5000, {
+        label: 'Undo',
+        onClick: () => {
+          if (cvDeleteTimer) { clearTimeout(cvDeleteTimer); cvDeleteTimer = null; }
+          if (snapshot) {
+            localStorage.setItem('careerai_cv', snapshot);
+            showCVOutput(snapshot);
+          }
+          showToast('Restored.', 'success');
+        }
+      });
+    }
+
+    // Clear with undo: snapshot current field values so they can be restored.
+    function clearCVForm() {
+      const fields = [...document.querySelectorAll('.tool-panel .form-control')];
+      const snapshot = fields.map(el => el.value);
+      fields.forEach(el => { el.value = ''; });
+      markUnsaved(false);
+      showToast('Form cleared.', 'info', 6000, {
+        label: 'Undo',
+        onClick: () => {
+          fields.forEach((el, i) => { el.value = snapshot[i]; });
+          showToast('Form restored.', 'success');
+        }
+      });
+    }
+
+    // Ctrl/Cmd + Enter to generate.
+    document.addEventListener('keydown', e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generateCV();
+    });
+  </script>
+</body>
+</html>
