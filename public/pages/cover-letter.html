@@ -20,6 +20,7 @@
       <a href="cover-letter.html" class="nav-item active" aria-current="page"><span class="nav-item-icon" aria-hidden="true">✉️</span> Cover Letter</a>
       <a href="ats-checker.html" class="nav-item"><span class="nav-item-icon">🎯</span> ATS Checker</a>
       <a href="interview-prep.html" class="nav-item"><span class="nav-item-icon">🎤</span> Interview Prep</a>
+      <a href="settings.html" class="nav-item"><span class="nav-item-icon" aria-hidden="true">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-pill">
@@ -32,9 +33,12 @@
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <main class="main-content">
-    <div class="page-header">
-      <h1>✉️ Cover Letter Generator</h1>
-      <p>Paste the job details and get a tailored cover letter in seconds.</p>
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1>✉️ Cover Letter Generator</h1>
+        <p>Paste the job details and get a tailored cover letter in seconds.</p>
+      </div>
+      <button type="button" class="help-chip" onclick="openShortcutsHelp()" aria-label="Keyboard shortcuts">Shortcuts <kbd>?</kbd></button>
     </div>
 
     <div class="tool-layout">
@@ -100,9 +104,16 @@
         </div>
         <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;" id="clActions" hidden>
           <button class="btn-primary" onclick="downloadCL()">⬇ Download PDF</button>
+          <button class="btn-outline" onclick="printCL()">🖨 Print</button>
           <button class="btn-outline" onclick="copyCL()">📋 Copy text</button>
           <button class="btn-outline" onclick="regenerateCL()">🔄 Regenerate</button>
           <button class="btn-outline" onclick="deleteSavedCL()">🗑 Delete saved</button>
+        </div>
+        <div class="tool-panel" style="margin-top:16px;">
+          <h3>Recent cover letters</h3>
+          <div id="clHistory" class="history-list" aria-live="polite">
+            <p class="history-empty">No previous letters yet.</p>
+          </div>
         </div>
         <div class="alert alert-error" id="clError" role="alert" style="margin-top:12px;">Failed to generate cover letter. Please try again.</div>
       </div>
@@ -203,7 +214,51 @@
       }
     }
 
+    function formatWhen(iso) {
+      try {
+        return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch { return ''; }
+    }
+
+    async function loadCLHistory() {
+      const box = document.getElementById('clHistory');
+      try {
+        const { data } = await apiFetch('/api/cover-letter/history');
+        if (!data.success || !data.history || !data.history.length) {
+          box.innerHTML = '<p class="history-empty">No previous letters yet.</p>';
+          return;
+        }
+        box.innerHTML = data.history.map(item => `
+          <button type="button" class="history-item" data-id="${item.id}">
+            <span><strong>${escapeHtml(item.job_title || 'Untitled')}</strong> · ${escapeHtml(item.company_name || '')}</span>
+            <span class="h-meta">${escapeHtml(formatWhen(item.created_at))}</span>
+          </button>`).join('');
+        box.querySelectorAll('.history-item').forEach(btn => {
+          btn.addEventListener('click', () => restoreCL(btn.dataset.id));
+        });
+      } catch {
+        box.innerHTML = '<p class="history-empty">Could not load history.</p>';
+      }
+    }
+
+    async function restoreCL(id) {
+      try {
+        const { data } = await apiFetch(`/api/cover-letter/${id}`);
+        if (data.success && data.coverLetter) {
+          document.getElementById('cl_jobtitle').value = data.coverLetter.job_title || '';
+          document.getElementById('cl_company').value = data.coverLetter.company_name || '';
+          showCLOutput(data.coverLetter.content || '');
+          localStorage.setItem('careerai_cl', data.coverLetter.content || '');
+          showToast('Loaded previous cover letter.', 'success');
+        } else showToast(data.message || 'Could not load letter.', 'error');
+      } catch (err) {
+        showToast(describeError(err), 'error');
+      }
+    }
+
     loadSavedCoverLetter();
+    loadCLHistory();
+    wireCharCounters({ cl_jd: 8000, cl_background: 8000 });
 
     document.querySelectorAll('.tool-panel .form-control').forEach(el =>
       el.addEventListener('input', () => markUnsaved(true)));
@@ -225,9 +280,9 @@
       out.hidden = false;
 
       const payload = {
-        jobTitle:    document.getElementById('cl_jobtitle').value,
-        companyName: document.getElementById('cl_company').value,
-        jobDescription: document.getElementById('cl_jd').value,
+        jobTitle:    document.getElementById('cl_jobtitle').value.trim(),
+        companyName: document.getElementById('cl_company').value.trim(),
+        jobDescription: document.getElementById('cl_jd').value.trim(),
         userName:    document.getElementById('cl_name').value,
         background:  document.getElementById('cl_background').value,
         tone:        document.getElementById('cl_tone').value,
@@ -236,6 +291,7 @@
 
       if (!payload.jobTitle || !payload.companyName || !payload.jobDescription) {
         out.innerHTML = '<p style="color:var(--danger)">Please fill in job title, company, and job description.</p>';
+        showToast('Job title, company, and job description are required.', 'error');
         return;
       }
 
@@ -256,10 +312,12 @@
           localStorage.setItem('careerai_cl', result.coverLetter);
           syncProfileFromCoverLetter(payload, result.coverLetter);
           markUnsaved(false);
+          markJourney('cl');
           showToast('Your cover letter is ready.', 'success');
+          loadCLHistory();
         } else {
           showCLError(result.message || 'Failed to generate cover letter. Please try again.');
-          out.innerHTML = '<p class="output-placeholder">Generation did not complete.</p>';
+          showFailedOutput(out, result.message || 'Generation did not complete.', generateCoverLetter);
         }
       } catch (err) {
         stopProgress();
@@ -268,7 +326,7 @@
           showToast('Generation cancelled.', 'info');
         } else {
           showCLError(describeError(err));
-          out.innerHTML = '<p class="output-placeholder">Generation failed.</p>';
+          showFailedOutput(out, describeError(err), generateCoverLetter);
         }
       } finally {
         clAbort = null;
@@ -285,6 +343,11 @@
     }
     function regenerateCL() { generateCoverLetter(); }
 
+    function printCL() {
+      printElementText(currentCLText(), 'Cover Letter – CareerAI');
+      markJourney('download');
+    }
+
     async function downloadCL() {
       try {
         const { ok, response } = await apiFetch('/api/cover-letter/download', {
@@ -295,6 +358,8 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'cover-letter.pdf'; a.click();
         URL.revokeObjectURL(url);
+        markJourney('download');
+        showToast('PDF downloaded.', 'success');
       } catch (err) {
         showToast(describeError(err), 'error');
       }

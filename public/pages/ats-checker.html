@@ -20,6 +20,7 @@
       <a href="cover-letter.html" class="nav-item"><span class="nav-item-icon">✉️</span> Cover Letter</a>
       <a href="ats-checker.html" class="nav-item active" aria-current="page"><span class="nav-item-icon" aria-hidden="true">🎯</span> ATS Checker</a>
       <a href="interview-prep.html" class="nav-item"><span class="nav-item-icon">🎤</span> Interview Prep</a>
+      <a href="settings.html" class="nav-item"><span class="nav-item-icon" aria-hidden="true">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-pill">
@@ -32,22 +33,30 @@
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <main class="main-content">
-    <div class="page-header">
-      <h1>🎯 ATS Score Checker <span class="info-tip" tabindex="0" role="img" aria-label="What is ATS? An Applicant Tracking System is software employers use to scan and rank CVs by keywords before a human reads them. A higher score means your CV is more likely to pass that automated scan." data-tip="An Applicant Tracking System (ATS) is software employers use to scan and rank CVs by keywords before a human reads them. A higher score means your CV is more likely to pass that automated scan.">i</span></h1>
-      <p>See how well your CV matches a job description and get improvement tips.</p>
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1>🎯 ATS Score Checker <span class="info-tip" tabindex="0" role="img" aria-label="What is ATS? An Applicant Tracking System is software employers use to scan and rank CVs by keywords before a human reads them. A higher score means your CV is more likely to pass that automated scan." data-tip="An Applicant Tracking System (ATS) is software employers use to scan and rank CVs by keywords before a human reads them. A higher score means your CV is more likely to pass that automated scan.">i</span></h1>
+        <p>See how well your CV matches a job description and get improvement tips.</p>
+      </div>
+      <button type="button" class="help-chip" onclick="openShortcutsHelp()" aria-label="Keyboard shortcuts">Shortcuts <kbd>?</kbd></button>
     </div>
 
     <div class="tool-layout">
       <!-- INPUT -->
       <div class="tool-panel">
-        <h3>Upload & Analyse</h3>
+        <h3>Analyse match</h3>
 
         <div class="form-group">
           <label class="form-label">Your CV text</label>
           <textarea class="form-control" id="ats_cv" rows="8" placeholder="Paste your CV text here…&#10;&#10;(Tip: use your generated CV from the CV Builder)"></textarea>
-          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+          <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <button class="btn-outline" style="font-size:0.8rem;padding:6px 14px;" onclick="loadSavedCV()">📄 Load saved CV</button>
-            <span style="font-size:0.75rem;color:var(--white-muted);">or paste manually above</span>
+            <label class="btn-outline" style="font-size:0.8rem;padding:6px 14px;cursor:pointer;margin:0;">
+              ⬆ Upload file
+              <input type="file" id="ats_file" accept=".txt,.md,.pdf,text/plain,application/pdf" hidden onchange="uploadCVFile(this)"/>
+            </label>
+            <button class="btn-outline" style="font-size:0.8rem;padding:6px 14px;" onclick="loadSampleATS()">✨ Try sample</button>
+            <span style="font-size:0.75rem;color:var(--white-muted);">.txt, .md, or .pdf (max 2 MB)</span>
           </div>
         </div>
 
@@ -103,6 +112,13 @@
         </div>
 
         <div class="alert alert-error" id="atsError" role="alert">Analysis failed. Please try again.</div>
+
+        <div class="tool-panel" id="atsHistoryPanel">
+          <h3>Recent scores</h3>
+          <div id="atsHistory" class="history-list" aria-live="polite">
+            <p class="history-empty">No previous analyses yet.</p>
+          </div>
+        </div>
       </div>
     </div>
   </main>
@@ -123,15 +139,11 @@
         const { data } = await apiFetch('/api/ats/latest');
         if (data.success && data.report) {
           document.getElementById('atsError').classList.remove('visible');
-          document.getElementById('scorePanel').hidden = false;
-          document.getElementById('keywordsPanel').hidden = false;
-          document.getElementById('suggestionsPanel').hidden = false;
-          document.getElementById('atsPlaceholder').hidden = true;
           renderResults({
             score: data.report.score,
-            foundKeywords: [],
-            missingKeywords: [],
-            suggestions: data.report.recommendations || []
+            foundKeywords: data.report.foundKeywords || [],
+            missingKeywords: data.report.missingKeywords || [],
+            suggestions: data.report.suggestions || data.report.recommendations || []
           });
         }
       } catch {
@@ -139,12 +151,88 @@
       }
     }
 
+    function formatWhen(iso) {
+      try {
+        return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch { return ''; }
+    }
+
+    async function loadATSHistory() {
+      const box = document.getElementById('atsHistory');
+      try {
+        const { data } = await apiFetch('/api/ats/history');
+        if (!data.success || !data.history?.length) {
+          box.innerHTML = '<p class="history-empty">No previous analyses yet.</p>';
+          return;
+        }
+        box.innerHTML = data.history.map(item => `
+          <button type="button" class="history-item" data-id="${item.id}">
+            <span><strong>Score ${escapeHtml(String(item.score))}</strong> / 100</span>
+            <span class="h-meta">${escapeHtml(formatWhen(item.created_at))}</span>
+          </button>`).join('');
+        box.querySelectorAll('.history-item').forEach(btn => {
+          btn.addEventListener('click', () => restoreATS(btn.dataset.id));
+        });
+      } catch {
+        box.innerHTML = '<p class="history-empty">Could not load history.</p>';
+      }
+    }
+
+    async function restoreATS(id) {
+      try {
+        const { data } = await apiFetch(`/api/ats/${id}`);
+        if (data.success && data.report) {
+          renderResults({
+            score: data.report.score,
+            foundKeywords: data.report.foundKeywords || [],
+            missingKeywords: data.report.missingKeywords || [],
+            suggestions: data.report.suggestions || []
+          });
+          showToast('Loaded previous ATS report.', 'success');
+        } else showToast(data.message || 'Could not load report.', 'error');
+      } catch (err) {
+        showToast(describeError(err), 'error');
+      }
+    }
+
     loadSavedATSReport();
+    loadATSHistory();
+    wireCharCounters({ ats_cv: 12000, ats_jd: 12000 });
 
     function loadSavedCV() {
       const cv = localStorage.getItem('careerai_cv');
-      if (cv) { document.getElementById('ats_cv').value = cv; showToast('Saved CV loaded.', 'success'); }
+      if (cv) { document.getElementById('ats_cv').value = cv; document.getElementById('ats_cv').dispatchEvent(new Event('input')); showToast('Saved CV loaded.', 'success'); }
       else showToast('No saved CV found. Generate one in the CV Builder first.', 'info');
+    }
+
+    async function uploadCVFile(input) {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const form = new FormData();
+      form.append('file', file);
+      showToast('Extracting text from file…', 'info', 2500);
+      try {
+        const { data } = await apiFetch('/api/ats/extract', { method: 'POST', body: form });
+        if (data.success && data.text) {
+          document.getElementById('ats_cv').value = data.text;
+          document.getElementById('ats_cv').dispatchEvent(new Event('input'));
+          showToast(data.truncated ? `Loaded ${data.filename} (truncated to limit).` : `Loaded ${data.filename || 'file'}.`, 'success');
+        } else {
+          showToast(data.message || 'Could not extract text.', 'error');
+        }
+      } catch (err) {
+        showToast(describeError(err), 'error');
+      } finally {
+        input.value = '';
+      }
+    }
+
+    function loadSampleATS() {
+      document.getElementById('ats_cv').value = `Kwame Mensah\nSoftware Engineer\nAccra, Ghana | kwame@email.com\n\nSKILLS\nJavaScript, Node.js, React, MySQL, Git, REST APIs\n\nEXPERIENCE\nSoftware Intern – Tech Ghana Ltd (2023)\n- Built REST APIs with Node.js serving 500+ daily users\n- Reduced page load time by 40% via caching\n\nEDUCATION\nBSc Computer Science, University of Ghana, 2024`;
+      document.getElementById('ats_jd').value = `We are hiring a Software Engineer Intern with experience in JavaScript, Node.js, React, and SQL databases. You will build APIs, collaborate with designers, and ship features to production. Familiarity with Git and Agile is a plus.`;
+      document.getElementById('ats_cv').dispatchEvent(new Event('input'));
+      document.getElementById('ats_jd').dispatchEvent(new Event('input'));
+      showToast('Sample data loaded — click Analyse to try it.', 'info');
     }
 
     let atsAbort = null;
@@ -153,8 +241,8 @@
     async function runATSCheck() {
       if (atsAbort) return;
       const btn = document.getElementById('atsBtn');
-      const cvText = document.getElementById('ats_cv').value;
-      const jdText = document.getElementById('ats_jd').value;
+      const cvText = document.getElementById('ats_cv').value.trim();
+      const jdText = document.getElementById('ats_jd').value.trim();
       document.getElementById('atsError').classList.remove('visible');
 
       if (!cvText || !jdText) {
@@ -177,14 +265,26 @@
           method: 'POST', body: { cvText, jobDescription: jdText }, signal: atsAbort.signal
         });
         stopProgress();
-        if (result.success) { renderResults(result.data); showToast('Analysis complete.', 'success'); }
-        else showATSError(result.message || 'ATS analysis failed. Please try again.');
+        if (result.success) {
+          renderResults(result.data);
+          markJourney('ats');
+          localStorage.setItem('careerai_ats', String(result.data.score));
+          showToast('Analysis complete.', 'success');
+          loadATSHistory();
+        } else {
+          showATSError(result.message || 'ATS analysis failed. Please try again.');
+          showFailedOutput(document.getElementById('atsProgress'), result.message || 'Analysis failed.', runATSCheck);
+        }
       } catch (err) {
         stopProgress();
-        document.getElementById('atsProgress').innerHTML =
-          '<p class="output-placeholder">Run the analysis to see your ATS score, keyword matches, and improvement tips.</p>';
-        if (err && err.name === 'AbortError') showToast('Analysis cancelled.', 'info');
-        else showATSError(describeError(err));
+        if (err && err.name === 'AbortError') {
+          document.getElementById('atsProgress').innerHTML =
+            '<p class="output-placeholder">Run the analysis to see your ATS score, keyword matches, and improvement tips.</p>';
+          showToast('Analysis cancelled.', 'info');
+        } else {
+          showATSError(describeError(err));
+          showFailedOutput(document.getElementById('atsProgress'), describeError(err), runATSCheck);
+        }
       } finally {
         atsAbort = null;
         btn.innerHTML = '🎯 Analyse my CV'; btn.disabled = false;

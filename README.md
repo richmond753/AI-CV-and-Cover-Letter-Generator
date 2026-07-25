@@ -12,13 +12,14 @@
 
 ## ✨ Features
 
-- **📄 CV Builder** – Turn your details into a polished, professional CV. Edit the AI output inline before exporting, then download as PDF or copy the text.
+- **📄 CV Builder** – Turn your details into a polished, professional CV. Edit the AI output inline before exporting, then download as PDF or copy/print the text.
 - **✉️ Cover Letter Writer** – Paste a job description and get a tailored cover letter in your chosen tone (professional, enthusiastic, concise, or creative).
-- **🎯 ATS Score Checker** – See how well your CV matches a job description, with a 0–100 score, matched/missing keywords, and concrete improvement tips.
+- **🎯 ATS Score Checker** – Upload `.txt` / `.md` / `.pdf` or paste text; get a 0–100 score, keywords, and improvement tips. Browse recent scores.
 - **🎤 Interview Prep** – Generate role-specific technical and behavioral questions with strong suggested answers.
-- **🔐 Authentication** – Secure register/login with JWT and hashed passwords (bcrypt).
-- **🧠 Smart UX** – Editable AI output, **cancellable generation**, **undo/restore** for clears and deletes, staged progress indicators, and toast notifications.
-- **♿ Accessible & responsive** – Keyboard focus states, ARIA labels, live regions, and a mobile-friendly layout.
+- **🔐 Authentication** – JWT login/register, profile settings, password change, and forgot/reset password flow.
+- **🧠 Smart UX** – Editable AI output, cancellable generation, undo/restore, staged progress, toasts, light/dark theme, onboarding tour, and feedback widget.
+- **💳 Freemium-ready** – Daily free AI credit meter, rate limiting, usage tracking, and landing-page pricing (Free / Pro / Campus).
+- **♿ Accessible & responsive** – Skip link, keyboard shortcuts (`?`), focus states, ARIA labels, and mobile layout.
 
 ---
 
@@ -39,31 +40,23 @@
 
 ```
 careerai/
-├── public/                   ← Frontend (HTML/CSS/JS)
-│   ├── index.html            ← Landing page
-│   ├── css/main.css          ← All styles
-│   ├── js/main.js            ← Shared utilities (apiFetch, toasts, progress, a11y)
+├── public/
+│   ├── index.html            ← Landing + pricing
+│   ├── css/main.css
+│   ├── js/main.js            ← Shared UX (theme, feedback, usage, shortcuts)
 │   └── pages/
-│       ├── login.html
-│       ├── register.html
-│       ├── dashboard.html
-│       ├── cv-builder.html
-│       ├── cover-letter.html
-│       ├── ats-checker.html
-│       └── interview-prep.html
+│       ├── login.html / register.html / forgot-password.html / reset-password.html
+│       ├── dashboard.html / settings.html
+│       ├── cv-builder.html / cover-letter.html
+│       ├── ats-checker.html / interview-prep.html
 └── backend/
-    ├── server.js             ← Express entry point (serves API + frontend)
-    ├── db.js                 ← MySQL connection pool
-    ├── schema.sql            ← Run once to create tables
-    ├── .env.example          ← Copy to backend/.env
-    ├── middleware/auth.js    ← JWT middleware
-    ├── controllers/gemini.js ← Gemini AI helper
-    └── routes/
-        ├── auth.js           ← Register / Login
-        ├── cv.js             ← CV generation + PDF + save/delete
-        ├── coverLetter.js    ← Cover letter generation + PDF + save/delete
-        ├── ats.js            ← ATS score checker
-        └── interview.js      ← Interview questions
+    ├── server.js             ← Express entry (rate limits, compression, health)
+    ├── config.js             ← Central env config
+    ├── db.js / schema.sql
+    ├── services/usage.js     ← Freemium quotas + schema extras
+    ├── middleware/auth.js / rateLimit.js
+    ├── controllers/gemini.js
+    └── routes/               ← auth, cv, coverLetter, ats, interview, usage
 ```
 
 ---
@@ -107,11 +100,14 @@ Then edit `backend/.env` with your own values:
 | `DB_PASSWORD`     | MySQL password                                           |
 | `DB_NAME`         | Database name (e.g. `careerai`)                          |
 | `PORT`            | Server port (defaults to `5000`)                         |
+| `APP_URL`         | Public URL for password-reset links                      |
+| `FREE_DAILY_GENERATIONS` | Daily free AI credit limit (default `15`)         |
 
 ### 5. Run the app (from the project root)
 ```bash
 npm run dev     # development with auto-restart (nodemon)
 npm start       # production
+npm run start:ca  # if TLS/proxy cert issues require --use-system-ca
 ```
 
 ### 6. Open in your browser
@@ -126,8 +122,9 @@ http://localhost:5000
 - Your real `backend/.env` (including the API key) is **git-ignored** and never committed — only `.env.example` is tracked.
 - Passwords are hashed with bcrypt; routes are protected with JWT middleware.
 - User/AI-supplied content is HTML-escaped on the frontend to prevent XSS.
+- API rate limiting and daily freemium quotas help control cost and abuse.
 
-> **Note:** This environment may sit behind a TLS-inspecting proxy/antivirus. If outbound HTTPS calls to Gemini fail with a certificate error, the `npm start` / `npm run dev` scripts already run Node with `--use-system-ca` to use the OS certificate store.
+> **Note:** If outbound HTTPS calls to Gemini fail with a certificate error (common behind TLS-inspecting antivirus/proxies), use `npm run start:ca` so Node trusts the OS certificate store.
 
 ---
 

@@ -3,13 +3,14 @@ const PDFDocument = require('pdfkit');
 const auth     = require('../middleware/auth');
 const db       = require('../db');
 const { callGemini } = require('../controllers/gemini');
+const { requireGenerationQuota } = require('../services/usage');
 const router   = express.Router();
 
 const MAX_FIELD = 5000;
 const clip = (value) => String(value || '').slice(0, MAX_FIELD);
 
 // ── POST /api/cv/generate ──────────────────────────────────
-router.post('/generate', auth, async (req, res) => {
+router.post('/generate', auth, requireGenerationQuota('cv'), async (req, res) => {
   const name          = clip(req.body.name);
   const title         = clip(req.body.title);
   const email         = clip(req.body.email);
@@ -66,7 +67,8 @@ Instructions:
       [req.user.id, education, experience, skills, projects, certifications, cv]
     );
 
-    res.json({ success: true, cv });
+    if (req.recordGeneration) await req.recordGeneration();
+    res.json({ success: true, cv, usage: req.usagePreview || null });
   } catch (err) {
     console.error('CV generation error:', err);
     res.status(500).json({

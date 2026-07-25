@@ -2,13 +2,14 @@ const express  = require('express');
 const auth     = require('../middleware/auth');
 const db       = require('../db');
 const { callGemini, extractJsonString } = require('../controllers/gemini');
+const { requireGenerationQuota } = require('../services/usage');
 const router   = express.Router();
 
 const MAX_FIELD = 3000;
 const clip = (value) => String(value || '').slice(0, MAX_FIELD);
 
 // ── POST /api/interview/generate ──────────────────────────
-router.post('/generate', auth, async (req, res) => {
+router.post('/generate', auth, requireGenerationQuota('interview'), async (req, res) => {
   const jobTitle = clip(req.body.jobTitle);
   const industry = clip(req.body.industry);
   const level    = clip(req.body.level);
@@ -62,7 +63,8 @@ For technical questions, give clear, accurate answers at the ${level} level.`;
       [req.user.id, jobTitle, JSON.stringify(data)]
     );
 
-    res.json({ success: true, data });
+    if (req.recordGeneration) await req.recordGeneration();
+    res.json({ success: true, data, usage: req.usagePreview || null });
   } catch (err) {
     console.error('Interview generation error:', err);
     res.status(500).json({
@@ -91,6 +93,43 @@ router.get('/latest', auth, async (req, res) => {
   } catch (err) {
     console.error('Load interview error:', err);
     res.status(500).json({ success: false, message: 'Failed to load saved interview questions.' });
+  }
+});
+
+// ── GET /api/interview/history ────────────────────────────
+router.get('/history', auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT id, job_title, created_at
+       FROM interview_questions WHERE user_id = ?
+       ORDER BY created_at DESC LIMIT 10`,
+      [req.user.id]
+    );
+    res.json({ success: true, history: rows });
+  } catch (err) {
+    console.error('Interview history error:', err);
+    res.status(500).json({ success: false, message: 'Failed to load interview history.' });
+  }
+});
+
+// ── GET /api/interview/:id ────────────────────────────────
+router.get('/:id', auth, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ success: false, message: 'Invalid id.' });
+  try {
+    const [rows] = await db.query(
+      'SELECT id, job_title, generated_questions, created_at FROM interview_questions WHERE id = ? AND user_id = ?',
+      [id, req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, message: 'Interview set not found.' });
+    const interview = rows[0];
+    interview.generated_questions = interview.generated_questions
+      ? JSON.parse(interview.generated_questions)
+      : null;
+    res.json({ success: true, interview });
+  } catch (err) {
+    console.error('Interview get error:', err);
+    res.status(500).json({ success: false, message: 'Failed to load interview set.' });
   }
 });
 

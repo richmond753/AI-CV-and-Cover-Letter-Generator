@@ -20,6 +20,7 @@
       <a href="cover-letter.html" class="nav-item"><span class="nav-item-icon">✉️</span> Cover Letter</a>
       <a href="ats-checker.html" class="nav-item"><span class="nav-item-icon">🎯</span> ATS Checker</a>
       <a href="interview-prep.html" class="nav-item active" aria-current="page"><span class="nav-item-icon" aria-hidden="true">🎤</span> Interview Prep</a>
+      <a href="settings.html" class="nav-item"><span class="nav-item-icon" aria-hidden="true">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-pill">
@@ -32,9 +33,12 @@
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <main class="main-content">
-    <div class="page-header">
-      <h1>🎤 Interview Prep</h1>
-      <p>Practice with AI-generated questions and suggested answers for your target role.</p>
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1>🎤 Interview Prep</h1>
+        <p>Practice with AI-generated questions and suggested answers for your target role.</p>
+      </div>
+      <button type="button" class="help-chip" onclick="openShortcutsHelp()" aria-label="Keyboard shortcuts">Shortcuts <kbd>?</kbd></button>
     </div>
 
     <div class="tool-layout">
@@ -107,13 +111,20 @@
 
         <div id="ipResults" hidden>
           <!-- Tabs -->
-          <div style="display:flex;gap:8px;margin-bottom:16px;" id="ipTabs">
-            <button class="tab-btn active" onclick="showTab('technical')" id="tab-technical">Technical</button>
-            <button class="tab-btn" onclick="showTab('behavioral')" id="tab-behavioral">Behavioral</button>
+          <div style="display:flex;gap:8px;margin-bottom:16px;" id="ipTabs" role="tablist">
+            <button class="tab-btn active" role="tab" aria-selected="true" onclick="showTab('technical')" id="tab-technical">Technical</button>
+            <button class="tab-btn" role="tab" aria-selected="false" onclick="showTab('behavioral')" id="tab-behavioral">Behavioral</button>
           </div>
 
-          <div id="tab-content-technical" class="question-list"></div>
-          <div id="tab-content-behavioral" class="question-list" hidden></div>
+          <div id="tab-content-technical" class="question-list" role="tabpanel"></div>
+          <div id="tab-content-behavioral" class="question-list" role="tabpanel" hidden></div>
+        </div>
+
+        <div class="tool-panel" style="margin-top:16px;">
+          <h3>Recent practice sets</h3>
+          <div id="ipHistory" class="history-list" aria-live="polite">
+            <p class="history-empty">No previous sets yet.</p>
+          </div>
         </div>
 
         <div class="alert alert-error" id="ipError" role="alert" style="margin-top:12px;">Failed to generate questions. Please try again.</div>
@@ -156,7 +167,49 @@
       }
     }
 
+    function formatWhen(iso) {
+      try {
+        return new Date(iso).toLocaleString(undefined, { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+      } catch { return ''; }
+    }
+
+    async function loadIPHistory() {
+      const box = document.getElementById('ipHistory');
+      try {
+        const { data } = await apiFetch('/api/interview/history');
+        if (!data.success || !data.history?.length) {
+          box.innerHTML = '<p class="history-empty">No previous sets yet.</p>';
+          return;
+        }
+        box.innerHTML = data.history.map(item => `
+          <button type="button" class="history-item" data-id="${item.id}">
+            <span><strong>${escapeHtml(item.job_title || 'Untitled role')}</strong></span>
+            <span class="h-meta">${escapeHtml(formatWhen(item.created_at))}</span>
+          </button>`).join('');
+        box.querySelectorAll('.history-item').forEach(btn => {
+          btn.addEventListener('click', () => restoreIP(btn.dataset.id));
+        });
+      } catch {
+        box.innerHTML = '<p class="history-empty">Could not load history.</p>';
+      }
+    }
+
+    async function restoreIP(id) {
+      try {
+        const { data } = await apiFetch(`/api/interview/${id}`);
+        if (data.success && data.interview?.generated_questions) {
+          document.getElementById('ip_title').value = data.interview.job_title || '';
+          renderQuestions(data.interview.generated_questions);
+          showToast('Loaded previous practice set.', 'success');
+        } else showToast(data.message || 'Could not load set.', 'error');
+      } catch (err) {
+        showToast(describeError(err), 'error');
+      }
+    }
+
     loadSavedInterview();
+    loadIPHistory();
+    wireCharCounters({ ip_context: 3000 });
 
     let ipAbort = null;
     function cancelIP() { if (ipAbort) ipAbort.abort(); }
@@ -167,10 +220,10 @@
       document.getElementById('ipError').classList.remove('visible');
 
       const payload = {
-        jobTitle:  document.getElementById('ip_title').value,
+        jobTitle:  document.getElementById('ip_title').value.trim(),
         industry:  document.getElementById('ip_industry').value,
         level:     document.getElementById('ip_level').value,
-        count:     parseInt(document.getElementById('ip_count').value),
+        count:     parseInt(document.getElementById('ip_count').value, 10),
         focus:     document.getElementById('ip_focus').value,
         context:   document.getElementById('ip_context').value
       };
@@ -192,14 +245,25 @@
       try {
         const { data: result } = await apiFetch('/api/interview/generate', { method: 'POST', body: payload, signal: ipAbort.signal });
         stopProgress();
-        if (result.success) { renderQuestions(result.data); showToast('Questions generated.', 'success'); }
-        else showIPError(result.message || 'Failed to generate questions. Please try again.');
+        if (result.success) {
+          renderQuestions(result.data);
+          markJourney('interview');
+          showToast('Questions generated.', 'success');
+          loadIPHistory();
+        } else {
+          showIPError(result.message || 'Failed to generate questions. Please try again.');
+          showFailedOutput(document.getElementById('ipProgress'), result.message || 'Generation failed.', generateQuestions);
+        }
       } catch (err) {
         stopProgress();
-        document.getElementById('ipProgress').innerHTML =
-          '<p class="output-placeholder">Your interview questions and suggested answers will appear here.</p>';
-        if (err && err.name === 'AbortError') showToast('Generation cancelled.', 'info');
-        else showIPError(describeError(err));
+        if (err && err.name === 'AbortError') {
+          document.getElementById('ipProgress').innerHTML =
+            '<p class="output-placeholder">Your interview questions and suggested answers will appear here.</p>';
+          showToast('Generation cancelled.', 'info');
+        } else {
+          showIPError(describeError(err));
+          showFailedOutput(document.getElementById('ipProgress'), describeError(err), generateQuestions);
+        }
       } finally {
         ipAbort = null;
         btn.innerHTML = '🎤 Generate questions'; btn.disabled = false;
@@ -215,19 +279,23 @@
       const behEl  = document.getElementById('tab-content-behavioral');
       techEl.innerHTML = ''; behEl.innerHTML = '';
 
-      const focus = document.getElementById('ip_focus').value;
       const techTab = document.getElementById('tab-technical');
       const behTab  = document.getElementById('tab-behavioral');
+      techTab.style.display = '';
+      behTab.style.display = '';
 
-      if (focus === 'behavioral') { techTab.style.display = 'none'; showTab('behavioral'); }
-      else if (focus === 'technical') { behTab.style.display = 'none'; showTab('technical'); }
+      const tech = data.technical || [];
+      const beh = data.behavioral || [];
 
-      (data.technical || []).forEach((q, i) => {
-        techEl.innerHTML += buildQuestionCard(q, 'Technical', i);
-      });
-      (data.behavioral || []).forEach((q, i) => {
-        behEl.innerHTML += buildQuestionCard(q, 'Behavioral', i);
-      });
+      if (!tech.length && beh.length) { techTab.style.display = 'none'; showTab('behavioral'); }
+      else if (tech.length && !beh.length) { behTab.style.display = 'none'; showTab('technical'); }
+      else showTab('technical');
+
+      if (!tech.length) techEl.innerHTML = '<p class="history-empty">No technical questions in this set.</p>';
+      else tech.forEach((q, i) => { techEl.innerHTML += buildQuestionCard(q, 'Technical', i); });
+
+      if (!beh.length) behEl.innerHTML = '<p class="history-empty">No behavioral questions in this set.</p>';
+      else beh.forEach((q, i) => { behEl.innerHTML += buildQuestionCard(q, 'Behavioral', i); });
     }
 
     function buildQuestionCard(q, type, i) {
@@ -235,7 +303,7 @@
       return `<div class="question-card">
         <div class="q-type">${escapeHtml(type)}</div>
         <div class="q-text">${escapeHtml(q.question)}</div>
-        <span class="q-toggle" onclick="toggleAnswer('${answerId}')">▸ Show suggested answer</span>
+        <button type="button" class="q-toggle" onclick="toggleAnswer('${answerId}')">▸ Show suggested answer</button>
         <div class="q-answer" id="${answerId}" hidden>${escapeHtml(q.answer)}</div>
       </div>`;
     }
@@ -250,7 +318,9 @@
     function showTab(name) {
       ['technical','behavioral'].forEach(t => {
         document.getElementById(`tab-content-${t}`).hidden = t !== name;
-        document.getElementById(`tab-${t}`).classList.toggle('active', t === name);
+        const tab = document.getElementById(`tab-${t}`);
+        tab.classList.toggle('active', t === name);
+        tab.setAttribute('aria-selected', t === name ? 'true' : 'false');
       });
     }
 

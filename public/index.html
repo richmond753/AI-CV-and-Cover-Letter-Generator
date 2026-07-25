@@ -3,45 +3,51 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>CareerAI – Your AI Career Assistant</title>
+  <title>CareerAI – AI CV & Cover Letter Generator</title>
+  <meta name="description" content="Generate professional CVs and cover letters, check ATS match scores, and prep for interviews with Google Gemini. Free to start."/>
+  <meta name="theme-color" content="#0D1117"/>
+  <meta property="og:title" content="CareerAI – Land your next role faster"/>
+  <meta property="og:description" content="AI CV builder, cover letters, ATS checker, and interview prep in one toolkit."/>
+  <meta property="og:type" content="website"/>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body class="landing-page">
 
-  <!-- NAV -->
   <nav class="navbar">
     <div class="nav-brand">Career<span class="accent">AI</span></div>
     <div class="nav-links">
       <a href="#features">Features</a>
+      <a href="#pricing">Pricing</a>
       <a href="pages/login.html" class="btn-outline">Log In</a>
       <a href="pages/register.html" class="btn-primary">Get Started</a>
     </div>
-    <button class="nav-toggle" onclick="toggleNav()">☰</button>
+    <button class="nav-toggle" onclick="toggleNav()" aria-label="Open menu">☰</button>
   </nav>
   <div class="nav-mobile" id="navMobile">
     <a href="#features">Features</a>
+    <a href="#pricing">Pricing</a>
     <a href="pages/login.html">Log In</a>
     <a href="pages/register.html">Get Started →</a>
   </div>
 
-  <!-- HERO -->
+  <main id="main-content">
   <section class="hero">
     <div class="hero-content">
       <div class="hero-eyebrow">AI-Powered Career Tools</div>
-      <h1 class="hero-title">Land your <span class="title-highlight">first job</span> faster.</h1>
+      <h1 class="hero-title">Land your <span class="title-highlight">next role</span> faster.</h1>
       <p class="hero-sub">CareerAI builds your CV, writes your cover letter, scores it against ATS systems, and preps you for interviews — in minutes, not days.</p>
       <div class="hero-cta">
-        <a href="pages/register.html" class="btn-primary btn-lg">Start for Free</a>
+        <a href="pages/register.html" class="btn-primary btn-lg">Start free</a>
         <a href="#features" class="btn-ghost btn-lg">See what it does ↓</a>
       </div>
       <div class="hero-stats">
         <div class="stat"><span class="stat-num">4</span><span class="stat-label">AI Tools</span></div>
         <div class="stat-divider"></div>
-        <div class="stat"><span class="stat-num">&lt;10s</span><span class="stat-label">Generation Time</span></div>
+        <div class="stat"><span class="stat-num">15</span><span class="stat-label">Free AI credits / day</span></div>
         <div class="stat-divider"></div>
-        <div class="stat"><span class="stat-num">Free</span><span class="stat-label">Always</span></div>
+        <div class="stat"><span class="stat-num">PDF</span><span class="stat-label">Export ready</span></div>
       </div>
     </div>
     <div class="hero-visual">
@@ -60,7 +66,13 @@
     </div>
   </section>
 
-  <!-- FEATURES -->
+  <div class="trust-strip" aria-label="Trust signals">
+    <span>JWT secured accounts</span>
+    <span>Editable AI output</span>
+    <span>ATS keyword analysis</span>
+    <span>Cancel anytime mid-generation</span>
+  </div>
+
   <section class="features" id="features">
     <div class="section-header">
       <p class="section-eyebrow">What CareerAI does</p>
@@ -83,7 +95,7 @@
       <div class="feature-card">
         <div class="feature-icon">🎯</div>
         <h3>ATS Score Checker</h3>
-        <p>Upload your CV and job description. See exactly how you score and what to fix.</p>
+        <p>Upload a PDF/TXT or paste your CV. See your score, keywords, and what to fix.</p>
         <a href="pages/register.html" class="feature-link">Check my score →</a>
       </div>
       <div class="feature-card">
@@ -95,7 +107,6 @@
     </div>
   </section>
 
-  <!-- HOW IT WORKS -->
   <section class="how-it-works">
     <div class="section-header">
       <p class="section-eyebrow">The process</p>
@@ -136,16 +147,61 @@
     </div>
   </section>
 
-  <!-- CTA BOTTOM -->
+  <section class="pricing" id="pricing">
+    <div class="section-header">
+      <p class="section-eyebrow">Simple pricing</p>
+      <h2>Start free. Upgrade when you’re ready.</h2>
+    </div>
+    <div class="pricing-grid">
+      <div class="price-card">
+        <h3>Free</h3>
+        <p style="color:var(--white-muted);font-size:0.85rem;">For students getting started</p>
+        <div class="price-amount">$0 <span>/ forever</span></div>
+        <ul>
+          <li>15 AI generations / day</li>
+          <li>CV + cover letter + ATS + interview</li>
+          <li>PDF export &amp; print</li>
+          <li>History of recent results</li>
+        </ul>
+        <a href="pages/register.html" class="btn-outline btn-full">Create free account</a>
+      </div>
+      <div class="price-card featured">
+        <h3>Pro</h3>
+        <p style="color:var(--white-muted);font-size:0.85rem;">For active job seekers</p>
+        <div class="price-amount">$9 <span>/ month</span></div>
+        <ul>
+          <li>Unlimited AI generations</li>
+          <li>Priority generation speed</li>
+          <li>Saved templates &amp; tones</li>
+          <li>Email support</li>
+        </ul>
+        <a href="pages/register.html" class="btn-mint btn-full">Start Pro trial</a>
+      </div>
+      <div class="price-card">
+        <h3>Campus</h3>
+        <p style="color:var(--white-muted);font-size:0.85rem;">For career centres &amp; clubs</p>
+        <div class="price-amount">Custom</div>
+        <ul>
+          <li>Shared admin dashboard</li>
+          <li>Usage analytics</li>
+          <li>SSO-ready architecture</li>
+          <li>Volume licensing</li>
+        </ul>
+        <a href="mailto:hello@careerai.app" class="btn-outline btn-full">Contact sales</a>
+      </div>
+    </div>
+  </section>
+
   <section class="cta-section">
     <h2>Ready to get hired?</h2>
-    <p>Join students and graduates using CareerAI to stand out.</p>
+    <p>Join students and graduates using CareerAI to stand out — with clear daily free credits and room to grow.</p>
     <a href="pages/register.html" class="btn-primary btn-lg">Create your free account</a>
   </section>
+  </main>
 
   <footer class="footer">
     <div class="footer-brand">Career<span class="accent">AI</span></div>
-    <p>AI-Powered Career Assistant · Built for students & graduates</p>
+    <p>AI-Powered Career Assistant · Built for students &amp; graduates</p>
   </footer>
 
   <script src="js/main.js"></script>

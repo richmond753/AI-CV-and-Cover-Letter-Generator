@@ -4,8 +4,9 @@
   "description": "CareerAI – AI-powered CV builder, cover letter writer, ATS checker, and interview prep (Node.js + Express + MySQL + Gemini).",
   "main": "backend/server.js",
   "scripts": {
-    "start": "node --use-system-ca backend/server.js",
-    "dev": "nodemon --exec \"node --use-system-ca\" backend/server.js",
+    "start": "node backend/server.js",
+    "start:ca": "node --use-system-ca backend/server.js",
+    "dev": "nodemon backend/server.js",
     "db:init": "mysql -u root -p < backend/schema.sql"
   },
   "engines": {
@@ -25,12 +26,14 @@
   "dependencies": {
     "@google/generative-ai": "^0.24.1",
     "bcryptjs": "^3.0.3",
+    "compression": "^1.8.1",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
     "mysql2": "^3.22.5",
+    "pdf-parse": "^1.1.4",
     "pdfkit": "^0.19.1"
   },
   "devDependencies": {

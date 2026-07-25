@@ -12,24 +12,26 @@
 
   <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
 
-  <!-- SIDEBAR -->
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-logo">Career<span class="accent">AI</span></div>
-    <nav class="sidebar-nav">
+    <nav class="sidebar-nav" aria-label="Primary">
       <a href="dashboard.html" class="nav-item active" aria-current="page">
         <span class="nav-item-icon" aria-hidden="true">🏠</span> Dashboard
       </a>
       <a href="cv-builder.html" class="nav-item">
-        <span class="nav-item-icon">📄</span> CV Builder
+        <span class="nav-item-icon" aria-hidden="true">📄</span> CV Builder
       </a>
       <a href="cover-letter.html" class="nav-item">
-        <span class="nav-item-icon">✉️</span> Cover Letter
+        <span class="nav-item-icon" aria-hidden="true">✉️</span> Cover Letter
       </a>
       <a href="ats-checker.html" class="nav-item">
-        <span class="nav-item-icon">🎯</span> ATS Checker
+        <span class="nav-item-icon" aria-hidden="true">🎯</span> ATS Checker
       </a>
       <a href="interview-prep.html" class="nav-item">
-        <span class="nav-item-icon">🎤</span> Interview Prep
+        <span class="nav-item-icon" aria-hidden="true">🎤</span> Interview Prep
+      </a>
+      <a href="settings.html" class="nav-item">
+        <span class="nav-item-icon" aria-hidden="true">⚙️</span> Settings
       </a>
     </nav>
     <div class="sidebar-footer">
@@ -37,16 +39,38 @@
         <div class="user-avatar" id="userAvatar">K</div>
         <span id="userName">Loading…</span>
       </div>
-      <button onclick="logout()" style="margin-top:10px; background:none; border:none; color:var(--white-muted); font-size:0.78rem; cursor:pointer;">Log out</button>
+      <button type="button" onclick="logout()" style="margin-top:10px; background:none; border:none; color:var(--white-muted); font-size:0.78rem; cursor:pointer;">Log out</button>
     </div>
   </aside>
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-  <!-- MAIN -->
-  <main class="main-content">
-    <div class="page-header">
-      <h1 id="greetingText">Good morning 👋</h1>
-      <p>Your career toolkit is ready. What would you like to work on today?</p>
+  <main class="main-content" id="main-content">
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1 id="greetingText">Good morning 👋</h1>
+        <p>Your career toolkit is ready. What would you like to work on today?</p>
+      </div>
+      <button type="button" class="help-chip" onclick="openShortcutsHelp()" aria-label="Keyboard shortcuts">
+        Shortcuts <kbd>?</kbd>
+      </button>
+    </div>
+
+    <div class="dash-stats" aria-label="Progress summary">
+      <div class="dash-stat">
+        <div class="s-label">Journey</div>
+        <div class="s-value" id="statJourney">0/6</div>
+        <div class="s-sub">steps complete</div>
+      </div>
+      <div class="dash-stat">
+        <div class="s-label">Latest ATS</div>
+        <div class="s-value" id="statAts">—</div>
+        <div class="s-sub" id="statAtsSub">Run a check to see your score</div>
+      </div>
+      <div class="dash-stat">
+        <div class="s-label">Documents</div>
+        <div class="s-value" id="statDocs">0</div>
+        <div class="s-sub">CV / cover letter saved</div>
+      </div>
     </div>
 
     <div class="dash-grid">
@@ -75,13 +99,13 @@
     <div style="background:var(--navy-card);border:1px solid var(--border);border-radius:16px;padding:24px;">
       <h3 style="margin-bottom:8px;">Your journey</h3>
       <p style="font-size:0.87rem;margin-bottom:18px;">Follow these steps to complete your job application.</p>
-      <div style="display:flex;flex-direction:column;gap:10px;">
-        <div class="journey-step" id="j1"><span class="j-num">1</span> Create your account <span class="j-check">✓</span></div>
-        <div class="journey-step" id="j2"><span class="j-num">2</span> Build your CV</div>
-        <div class="journey-step" id="j3"><span class="j-num">3</span> Write your cover letter</div>
-        <div class="journey-step" id="j4"><span class="j-num">4</span> Check your ATS score</div>
-        <div class="journey-step" id="j5"><span class="j-num">5</span> Practice interview questions</div>
-        <div class="journey-step" id="j6"><span class="j-num">6</span> Download your documents</div>
+      <div style="display:flex;flex-direction:column;gap:10px;" id="journeyList">
+        <div class="journey-step" id="j1" data-step="account"><span class="j-num">1</span> Create your account</div>
+        <div class="journey-step" id="j2" data-step="cv"><span class="j-num">2</span> Build your CV <a class="j-link" href="cv-builder.html">Open →</a></div>
+        <div class="journey-step" id="j3" data-step="cl"><span class="j-num">3</span> Write your cover letter <a class="j-link" href="cover-letter.html">Open →</a></div>
+        <div class="journey-step" id="j4" data-step="ats"><span class="j-num">4</span> Check your ATS score <a class="j-link" href="ats-checker.html">Open →</a></div>
+        <div class="journey-step" id="j5" data-step="interview"><span class="j-num">5</span> Practice interview questions <a class="j-link" href="interview-prep.html">Open →</a></div>
+        <div class="journey-step" id="j6" data-step="download"><span class="j-num">6</span> Download your documents <a class="j-link" href="cv-builder.html">Open →</a></div>
       </div>
     </div>
   </main>
@@ -102,16 +126,66 @@
     .journey-step.done { color:var(--mint); border-color:rgba(62,237,199,0.2); background:rgba(62,237,199,0.05); }
     .journey-step.done .j-num { background:var(--mint); color:var(--navy); border-color:var(--mint); }
     .j-check { margin-left:auto; font-size:0.85rem; }
+    .j-link {
+      margin-left:auto; font-size:0.75rem; font-weight:600;
+      color:var(--indigo-lt); white-space:nowrap;
+    }
+    .journey-step.done .j-link { display:none; }
   </style>
 
   <script src="../js/main.js"></script>
   <script>
     if (!requireAuth()) { /* redirected to login */ }
     setUserIdentity();
+    markJourney('account');
 
-    document.getElementById('j1').classList.add('done');
-    if (localStorage.getItem('careerai_cv')) document.getElementById('j2').classList.add('done');
-    if (localStorage.getItem('careerai_cl')) document.getElementById('j3').classList.add('done');
+    function markDone(el) {
+      if (!el) return;
+      el.classList.add('done');
+      if (!el.querySelector('.j-check')) {
+        const check = document.createElement('span');
+        check.className = 'j-check';
+        check.textContent = '✓';
+        check.setAttribute('aria-hidden', 'true');
+        el.appendChild(check);
+      }
+    }
+
+    async function refreshDashboard() {
+      const journey = getJourney();
+      const hasCv = !!(localStorage.getItem('careerai_cv') || journey.cv);
+      const hasCl = !!(localStorage.getItem('careerai_cl') || journey.cl);
+      const hasAts = !!journey.ats;
+      const hasInterview = !!journey.interview;
+      const hasDownload = !!journey.download;
+
+      if (hasCv) markDone(document.getElementById('j2'));
+      if (hasCl) markDone(document.getElementById('j3'));
+      if (hasAts) markDone(document.getElementById('j4'));
+      if (hasInterview) markDone(document.getElementById('j5'));
+      if (hasDownload) markDone(document.getElementById('j6'));
+      markDone(document.getElementById('j1'));
+
+      const doneCount = [true, hasCv, hasCl, hasAts, hasInterview, hasDownload].filter(Boolean).length;
+      document.getElementById('statJourney').textContent = `${doneCount}/6`;
+      document.getElementById('statDocs').textContent = String((hasCv ? 1 : 0) + (hasCl ? 1 : 0));
+
+      try {
+        const { data } = await apiFetch('/api/ats/latest');
+        if (data.success && data.report) {
+          document.getElementById('statAts').textContent = String(data.report.score ?? '—');
+          document.getElementById('statAtsSub').textContent = 'Last analysed score';
+          if (!hasAts) {
+            markJourney('ats');
+            markDone(document.getElementById('j4'));
+            document.getElementById('statJourney').textContent =
+              `${[true, hasCv, hasCl, true, hasInterview, hasDownload].filter(Boolean).length}/6`;
+          }
+        }
+      } catch { /* optional */ }
+    }
+
+    refreshDashboard();
   </script>
 </body>
 </html>

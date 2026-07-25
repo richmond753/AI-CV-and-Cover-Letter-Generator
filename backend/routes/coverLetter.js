@@ -3,13 +3,14 @@ const PDFDocument = require('pdfkit');
 const auth     = require('../middleware/auth');
 const db       = require('../db');
 const { callGemini } = require('../controllers/gemini');
+const { requireGenerationQuota } = require('../services/usage');
 const router   = express.Router();
 
 const MAX_FIELD = 8000;
 const clip = (value) => String(value || '').slice(0, MAX_FIELD);
 
 // ── POST /api/cover-letter/generate ───────────────────────
-router.post('/generate', auth, async (req, res) => {
+router.post('/generate', auth, requireGenerationQuota('cover-letter'), async (req, res) => {
   const jobTitle       = clip(req.body.jobTitle);
   const companyName    = clip(req.body.companyName);
   const jobDescription = clip(req.body.jobDescription);
@@ -56,7 +57,8 @@ Instructions:
       [req.user.id, companyName, jobTitle, coverLetter]
     );
 
-    res.json({ success: true, coverLetter });
+    if (req.recordGeneration) await req.recordGeneration();
+    res.json({ success: true, coverLetter, usage: req.usagePreview || null });
   } catch (err) {
     console.error('Cover letter error:', err);
     res.status(500).json({
@@ -117,6 +119,39 @@ router.post('/download', auth, (req, res) => {
   });
 
   doc.end();
+});
+
+// ── GET /api/cover-letter/history ─────────────────────────
+router.get('/history', auth, async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      `SELECT id, company_name, job_title, created_at
+       FROM cover_letters WHERE user_id = ?
+       ORDER BY created_at DESC LIMIT 10`,
+      [req.user.id]
+    );
+    res.json({ success: true, history: rows });
+  } catch (err) {
+    console.error('Cover letter history error:', err);
+    res.status(500).json({ success: false, message: 'Failed to load cover letter history.' });
+  }
+});
+
+// ── GET /api/cover-letter/:id ─────────────────────────────
+router.get('/:id', auth, async (req, res) => {
+  const id = parseInt(req.params.id, 10);
+  if (!id) return res.status(400).json({ success: false, message: 'Invalid id.' });
+  try {
+    const [rows] = await db.query(
+      'SELECT id, company_name, job_title, content, created_at FROM cover_letters WHERE id = ? AND user_id = ?',
+      [id, req.user.id]
+    );
+    if (!rows.length) return res.status(404).json({ success: false, message: 'Cover letter not found.' });
+    res.json({ success: true, coverLetter: rows[0] });
+  } catch (err) {
+    console.error('Cover letter get error:', err);
+    res.status(500).json({ success: false, message: 'Failed to load cover letter.' });
+  }
 });
 
 // ── DELETE /api/cover-letter/latest ───────────────────────

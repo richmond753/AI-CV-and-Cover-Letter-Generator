@@ -20,6 +20,7 @@
       <a href="cover-letter.html" class="nav-item"><span class="nav-item-icon">✉️</span> Cover Letter</a>
       <a href="ats-checker.html" class="nav-item"><span class="nav-item-icon">🎯</span> ATS Checker</a>
       <a href="interview-prep.html" class="nav-item"><span class="nav-item-icon">🎤</span> Interview Prep</a>
+      <a href="settings.html" class="nav-item"><span class="nav-item-icon" aria-hidden="true">⚙️</span> Settings</a>
     </nav>
     <div class="sidebar-footer">
       <div class="user-pill">
@@ -32,9 +33,12 @@
   <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
 
   <main class="main-content">
-    <div class="page-header">
-      <h1>📄 CV Builder</h1>
-      <p>Fill in your details and let AI generate a professional CV.</p>
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1>📄 CV Builder</h1>
+        <p>Fill in your details and let AI generate a professional CV.</p>
+      </div>
+      <button type="button" class="help-chip" onclick="openShortcutsHelp()" aria-label="Keyboard shortcuts">Shortcuts <kbd>?</kbd></button>
     </div>
 
     <div class="tool-layout">
@@ -117,6 +121,7 @@
         </div>
         <div style="margin-top:14px;display:flex;gap:10px;flex-wrap:wrap;" id="cvActions" hidden>
           <button class="btn-primary" onclick="downloadCV()">⬇ Download PDF</button>
+          <button class="btn-outline" onclick="printCV()">🖨 Print</button>
           <button class="btn-outline" onclick="copyCV()">📋 Copy text</button>
           <button class="btn-outline" onclick="generateCV()">🔄 Regenerate</button>
           <button class="btn-outline" onclick="deleteSavedCV()">🗑 Delete saved</button>
@@ -254,6 +259,13 @@
 
     fillFieldsFromProfile();
     loadSavedCV();
+    wireCharCounters({
+      cv_education: 5000,
+      cv_experience: 5000,
+      cv_skills: 5000,
+      cv_projects: 5000,
+      cv_certs: 5000
+    });
 
     // Warn before leaving with unsaved edits.
     document.querySelectorAll('.tool-panel .form-control').forEach(el =>
@@ -277,21 +289,22 @@
       out.hidden = false;
 
       const data = {
-        name: document.getElementById('cv_name').value,
+        name: document.getElementById('cv_name').value.trim(),
         title: document.getElementById('cv_title').value,
         email: document.getElementById('cv_email').value,
         phone: document.getElementById('cv_phone').value,
         location: document.getElementById('cv_location').value,
         links: document.getElementById('cv_links').value,
-        education: document.getElementById('cv_education').value,
+        education: document.getElementById('cv_education').value.trim(),
         experience: document.getElementById('cv_experience').value,
-        skills: document.getElementById('cv_skills').value,
+        skills: document.getElementById('cv_skills').value.trim(),
         projects: document.getElementById('cv_projects').value,
         certifications: document.getElementById('cv_certs').value
       };
 
-      if (!data.name || !data.education) {
-        out.innerHTML = '<p style="color:var(--danger)">Please fill in at least your name and education.</p>';
+      if (!data.name || !data.education || !data.skills) {
+        out.innerHTML = '<p style="color:var(--danger)">Please fill in your name, education, and skills.</p>';
+        showToast('Name, education, and skills are required.', 'error');
         return;
       }
 
@@ -312,10 +325,11 @@
           localStorage.setItem('careerai_cv', result.cv);
           syncProfileFromFields(data);
           markUnsaved(false);
+          markJourney('cv');
           showToast('Your CV is ready.', 'success');
         } else {
           showCVError(result.message || 'Failed to generate CV. Please try again.');
-          out.innerHTML = '<p class="output-placeholder">Generation did not complete.</p>';
+          showFailedOutput(out, result.message || 'Generation did not complete.', generateCV);
         }
       } catch (err) {
         stopProgress();
@@ -324,7 +338,7 @@
           showToast('Generation cancelled.', 'info');
         } else {
           showCVError(describeError(err));
-          out.innerHTML = '<p class="output-placeholder">Generation failed.</p>';
+          showFailedOutput(out, describeError(err), generateCV);
         }
       } finally {
         cvAbort = null;
@@ -346,9 +360,16 @@
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a'); a.href = url; a.download = 'my-cv.pdf'; a.click();
         URL.revokeObjectURL(url);
+        markJourney('download');
+        showToast('PDF downloaded.', 'success');
       } catch (err) {
         showToast(describeError(err), 'error');
       }
+    }
+
+    function printCV() {
+      printElementText(currentCVText(), 'My CV – CareerAI');
+      markJourney('download');
     }
 
     function copyCV() {

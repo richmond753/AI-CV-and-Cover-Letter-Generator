@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Settings – CareerAI</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="../css/main.css">
+</head>
+<body class="dashboard-layout">
+
+  <button class="mobile-menu-btn" onclick="toggleSidebar()" aria-label="Open menu">☰</button>
+
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">Career<span class="accent">AI</span></div>
+    <nav class="sidebar-nav" aria-label="Primary">
+      <a href="dashboard.html" class="nav-item"><span class="nav-item-icon" aria-hidden="true">🏠</span> Dashboard</a>
+      <a href="cv-builder.html" class="nav-item"><span class="nav-item-icon" aria-hidden="true">📄</span> CV Builder</a>
+      <a href="cover-letter.html" class="nav-item"><span class="nav-item-icon" aria-hidden="true">✉️</span> Cover Letter</a>
+      <a href="ats-checker.html" class="nav-item"><span class="nav-item-icon" aria-hidden="true">🎯</span> ATS Checker</a>
+      <a href="interview-prep.html" class="nav-item"><span class="nav-item-icon" aria-hidden="true">🎤</span> Interview Prep</a>
+      <a href="settings.html" class="nav-item active" aria-current="page"><span class="nav-item-icon" aria-hidden="true">⚙️</span> Settings</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="user-pill">
+        <div class="user-avatar" id="userAvatar">U</div>
+        <span id="userName">User</span>
+      </div>
+      <button type="button" onclick="logout()" style="margin-top:10px;background:none;border:none;color:var(--white-muted);font-size:0.78rem;cursor:pointer;">Log out</button>
+    </div>
+  </aside>
+  <div class="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+  <main class="main-content" id="main-content">
+    <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+      <div>
+        <h1>⚙️ Settings</h1>
+        <p>Manage your profile and account security.</p>
+      </div>
+      <button type="button" class="help-chip" onclick="openShortcutsHelp()" aria-label="Keyboard shortcuts">
+        Shortcuts <kbd>?</kbd>
+      </button>
+    </div>
+
+    <div class="tool-layout">
+      <div class="tool-panel">
+        <h3>Profile</h3>
+        <div class="form-group">
+          <label class="form-label" for="set_fullname">Full name</label>
+          <input class="form-control" id="set_fullname" maxlength="150" autocomplete="name"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="set_email">Email</label>
+          <input class="form-control" id="set_email" type="email" disabled aria-describedby="emailHint"/>
+          <span class="form-hint" id="emailHint">Email can’t be changed here. Contact support if you need to update it.</span>
+        </div>
+        <button class="btn-mint" id="saveProfileBtn" type="button" onclick="saveProfile()">Save profile</button>
+        <div class="alert alert-error" id="profileError" role="alert" style="margin-top:12px;"></div>
+      </div>
+
+      <div class="tool-panel">
+        <h3>Change password</h3>
+        <div class="form-group">
+          <label class="form-label" for="set_current">Current password</label>
+          <input class="form-control" id="set_current" type="password" autocomplete="current-password"/>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="set_new">New password</label>
+          <input class="form-control" id="set_new" type="password" autocomplete="new-password" minlength="8"/>
+          <span class="form-hint">At least 8 characters.</span>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="set_confirm">Confirm new password</label>
+          <input class="form-control" id="set_confirm" type="password" autocomplete="new-password"/>
+        </div>
+        <button class="btn-primary" id="changePwBtn" type="button" onclick="changePassword()">Update password</button>
+        <div class="alert alert-error" id="pwError" role="alert" style="margin-top:12px;"></div>
+      </div>
+    </div>
+  </main>
+
+  <script src="../js/main.js"></script>
+  <script>
+    if (!requireAuth()) { /* redirected */ }
+    setUserIdentity();
+
+    async function loadProfile() {
+      try {
+        const { data } = await apiFetch('/api/auth/me');
+        if (data.success && data.user) {
+          document.getElementById('set_fullname').value = data.user.fullname || '';
+          document.getElementById('set_email').value = data.user.email || '';
+          localStorage.setItem('careerai_user', JSON.stringify({
+            id: data.user.id,
+            fullname: data.user.fullname,
+            email: data.user.email
+          }));
+          setStoredProfile({ fullname: data.user.fullname, email: data.user.email });
+          setUserIdentity();
+        }
+      } catch (err) {
+        showToast(describeError(err), 'error');
+      }
+    }
+
+    async function saveProfile() {
+      const el = document.getElementById('profileError');
+      el.classList.remove('visible');
+      const fullname = document.getElementById('set_fullname').value.trim();
+      if (!fullname) {
+        el.textContent = 'Please enter your full name.';
+        el.classList.add('visible');
+        return;
+      }
+      const btn = document.getElementById('saveProfileBtn');
+      btn.disabled = true;
+      try {
+        const { data } = await apiFetch('/api/auth/profile', { method: 'PATCH', body: { fullname } });
+        if (data.success) {
+          if (data.token) localStorage.setItem('careerai_token', data.token);
+          localStorage.setItem('careerai_user', JSON.stringify(data.user));
+          setStoredProfile({ fullname: data.user.fullname, email: data.user.email });
+          setUserIdentity();
+          showToast('Profile saved.', 'success');
+        } else {
+          el.textContent = data.message || 'Could not save profile.';
+          el.classList.add('visible');
+        }
+      } catch (err) {
+        el.textContent = describeError(err);
+        el.classList.add('visible');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function changePassword() {
+      const el = document.getElementById('pwError');
+      el.classList.remove('visible');
+      const currentPassword = document.getElementById('set_current').value;
+      const newPassword = document.getElementById('set_new').value;
+      const confirm = document.getElementById('set_confirm').value;
+      if (!currentPassword || !newPassword) {
+        el.textContent = 'Please fill in both password fields.';
+        el.classList.add('visible');
+        return;
+      }
+      if (newPassword.length < 8) {
+        el.textContent = 'New password must be at least 8 characters.';
+        el.classList.add('visible');
+        return;
+      }
+      if (newPassword !== confirm) {
+        el.textContent = 'New password and confirmation do not match.';
+        el.classList.add('visible');
+        return;
+      }
+      const btn = document.getElementById('changePwBtn');
+      btn.disabled = true;
+      try {
+        const { data } = await apiFetch('/api/auth/change-password', {
+          method: 'POST',
+          body: { currentPassword, newPassword }
+        });
+        if (data.success) {
+          document.getElementById('set_current').value = '';
+          document.getElementById('set_new').value = '';
+          document.getElementById('set_confirm').value = '';
+          showToast('Password updated.', 'success');
+        } else {
+          el.textContent = data.message || 'Could not change password.';
+          el.classList.add('visible');
+        }
+      } catch (err) {
+        el.textContent = describeError(err);
+        el.classList.add('visible');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    loadProfile();
+  </script>
+</body>
+</html>

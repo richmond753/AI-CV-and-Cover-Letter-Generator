@@ -61,3 +61,39 @@ CREATE TABLE IF NOT EXISTS interview_questions (
   KEY idx_interview_user (user_id, created_at),
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Daily AI usage (freemium / cost control)
+CREATE TABLE IF NOT EXISTS usage_events (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT NOT NULL,
+  action     VARCHAR(64) NOT NULL,
+  day_key    CHAR(10) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_usage_user_day (user_id, day_key),
+  KEY idx_usage_action (action),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- Product feedback (customer satisfaction)
+CREATE TABLE IF NOT EXISTS feedback (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT NULL,
+  rating     TINYINT NOT NULL,
+  message    VARCHAR(1000) NULL,
+  page       VARCHAR(120) NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_feedback_created (created_at),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+);
+
+-- Password reset tokens
+CREATE TABLE IF NOT EXISTS password_resets (
+  id         INT AUTO_INCREMENT PRIMARY KEY,
+  user_id    INT NOT NULL,
+  token_hash VARCHAR(255) NOT NULL,
+  expires_at DATETIME NOT NULL,
+  used_at    DATETIME NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  KEY idx_reset_token (token_hash),
+  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
